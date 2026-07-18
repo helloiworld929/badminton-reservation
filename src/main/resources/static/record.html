@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>预约记录</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="page">
+    <section class="panel">
+        <div class="toolbar">
+            <h2 class="panel-title" style="margin-bottom:0;">我的预约记录</h2>
+            <input class="input" type="text" id="searchInput" placeholder="输入场地搜索，例如：1号场">
+            <button class="btn" type="button" id="refreshBtn">刷新数据</button>
+        </div>
+    </section>
+    <section class="panel">
+        <div class="table-wrap">
+            <table id="bookingTable">
+                <thead>
+                <tr>
+                    <th>序号</th>
+                    <th>场地</th>
+                    <th>预约日期</th>
+                    <th>开始时间</th>
+                    <th>结束时间</th>
+                    <th>创建时间</th>
+                    <th>状态</th>
+                    <th>验证码</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <div id="pagination" class="pagination"></div>
+    </section>
+</div>
+<script src="js/api.js"></script>
+<script src="js/record.js"></script>
+</body>
+</html>

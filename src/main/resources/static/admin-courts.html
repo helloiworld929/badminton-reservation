@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>场地管理</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="page">
+    <!-- 预约核销 -->
+    <section class="panel">
+        <h2 class="panel-title">预约核销</h2>
+        <div style="display:flex;gap:48px;align-items:center;padding:0 32px;">
+            <div class="form-grid" style="width:360px;flex-shrink:0;">
+                <label>
+                    输入用户提供的 6 位验证码
+                    <input class="input" type="text" id="verifyCode" maxlength="6" placeholder="例：482931" style="font-size:20px;letter-spacing:4px;text-align:center;" autofocus>
+                </label>
+                <button class="btn" type="button" id="verifyBtn" style="width:100%;">确认核销</button>
+                <div id="verifyResult"></div>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:180px;">
+                <div id="clockTime" style="font-size:80px;font-weight:700;color:#00547d;line-height:1;font-family:'Consolas','Courier New',monospace;">00:00:00</div>
+                <div id="clockDate" style="font-size:20px;color:#697586;margin-top:8px;"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 场地管理 -->
+    <section class="panel">
+        <div class="toolbar">
+            <h2 class="panel-title" style="margin-bottom:0;">场地管理</h2>
+            <button class="btn" type="button" id="addCourtBtn">新增场地</button>
+        </div>
+    </section>
+    <section class="panel">
+        <div class="table-wrap">
+            <table id="courtTable">
+                <thead>
+                <tr>
+                    <th>序号</th>
+                    <th>场地名称</th>
+                    <th>备注</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+<!-- Add Court Modal -->
+<div id="addModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>新增场地</h3>
+            <button class="close-btn" type="button" id="closeAdd">&times;</button>
+        </div>
+        <form id="addForm" class="form-grid">
+            <label>
+                场地名称
+                <input class="input" type="text" id="courtName" placeholder="例：1号场" required>
+            </label>
+            <label>
+                备注
+                <input class="input" type="text" id="courtRemark" placeholder="例：VIP场、近门口">
+            </label>
+            <div class="modal-actions">
+                <button class="btn secondary" type="button" id="cancelAdd">取消</button>
+                <button class="btn" type="submit">确认新增</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/admin-courts.js"></script>
+</body>
+</html>

@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.badminton.mapper.ReservationMapper">
+
+    <resultMap id="reservationMap" type="com.badminton.entity.Reservation">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="courtId" column="court_id"/>
+        <result property="reserveDate" column="reserve_date"/>
+        <result property="startTime" column="start_time"/>
+        <result property="endTime" column="end_time"/>
+        <result property="verificationCode" column="verification_code"/>
+        <result property="verifiedAt" column="verified_at"/>
+        <result property="verifiedBy" column="verified_by"/>
+        <result property="createdAt" column="created_at"/>
+        <!-- JOIN 附加字段 -->
+        <result property="courtName" column="courtName"/>
+        <result property="userAvatar" column="userAvatar"/>
+        <result property="userGender" column="userGender"/>
+        <result property="userNickname" column="userNickname"/>
+        <result property="userPhone" column="userPhone"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="reservationMap">
+        SELECT * FROM reservations WHERE id = #{id}
+    </select>
+
+    <select id="selectAll" resultMap="reservationMap">
+        SELECT * FROM reservations
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO reservations (user_id, court_id, reserve_date, start_time, end_time,
+                                  status, verification_code, verified_at, verified_by, created_at)
+        VALUES (#{userId}, #{courtId}, #{reserveDate}, #{startTime}, #{endTime},
+                #{status}, #{verificationCode}, #{verifiedAt}, #{verifiedBy}, #{createdAt})
+    </insert>
+
+    <update id="updateById">
+        UPDATE reservations
+        SET user_id           = #{userId},
+            court_id          = #{courtId},
+            reserve_date      = #{reserveDate},
+            start_time        = #{startTime},
+            end_time          = #{endTime},
+            status            = #{status},
+            verification_code = #{verificationCode},
+            verified_at       = #{verifiedAt},
+            verified_by       = #{verifiedBy}
+        WHERE id = #{id}
+    </update>
+
+    <select id="findBySlot" resultMap="reservationMap">
+        SELECT r.*, c.name AS courtName, u.avatar AS userAvatar, u.gender AS userGender,
+               u.nickname AS userNickname
+        FROM reservations r
+                 JOIN courts c ON r.court_id = c.id
+                 JOIN users u ON r.user_id = u.id
+        WHERE r.reserve_date = #{date}
+          AND r.start_time = #{startTime}
+          AND r.status NOT IN ('cancelled')
+        ORDER BY r.court_id, r.id
+    </select>
+
+    <select id="countActiveByCourtSlot" resultType="int">
+        SELECT COUNT(*)
+        FROM reservations
+        WHERE court_id = #{courtId}
+          AND reserve_date = #{date}
+          AND start_time = #{startTime}
+          AND status NOT IN ('cancelled')
+    </select>
+
+    <select id="findByUser" resultMap="reservationMap">
+        SELECT r.*, c.name AS courtName, u.avatar AS userAvatar, u.gender AS userGender,
+               u.nickname AS userNickname
+        FROM reservations r
+                 JOIN courts c ON r.court_id = c.id
+                 JOIN users u ON r.user_id = u.id
+        WHERE r.user_id = #{userId}
+        ORDER BY r.reserve_date DESC, r.start_time DESC, r.id DESC
+    </select>
+
+    <select id="findDetailById" resultMap="reservationMap">
+        SELECT r.*, c.name AS courtName, u.nickname AS userNickname, u.phone AS userPhone
+        FROM reservations r
+                 JOIN courts c ON r.court_id = c.id
+                 JOIN users u ON r.user_id = u.id
+        WHERE r.id = #{id}
+    </select>
+
+    <select id="findAdminList" resultMap="reservationMap">
+        SELECT r.*, c.name AS courtName, u.avatar AS userAvatar, u.gender AS userGender,
+               u.nickname AS userNickname, u.phone AS userPhone
+        FROM reservations r
+                 JOIN courts c ON r.court_id = c.id
+                 JOIN users u ON r.user_id = u.id
+        <where>
+            <if test='status != null and status != ""'>
+                AND r.status = #{status}
+            </if>
+            <if test='date != null and date != ""'>
+                AND r.reserve_date = #{date}
+            </if>
+            <if test='courtId != null'>
+                AND r.court_id = #{courtId}
+            </if>
+        </where>
+        ORDER BY r.reserve_date DESC, r.start_time DESC, r.id DESC
+    </select>
+
+    <select id="findByVerificationCode" resultMap="reservationMap">
+        SELECT * FROM reservations WHERE verification_code = #{code} AND status != 'cancelled' LIMIT 1
+    </select>
+
+    <select id="findNoshowCandidates" resultMap="reservationMap">
+        SELECT * FROM reservations
+        WHERE status = 'unverified'
+          AND reserve_date IS NOT NULL
+          AND start_time IS NOT NULL
+          AND CONCAT(reserve_date, ' ', LPAD(start_time, 2, '0'), ':00:00') &lt; #{cutoff}
+    </select>
+
+</mapper>

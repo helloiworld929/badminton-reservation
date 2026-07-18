@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的信息</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="page">
+    <section class="panel">
+        <h2 class="panel-title">我的信息</h2>
+        <div class="info-layout">
+            <div>
+                <div class="profile-avatar-wrap" id="avatarWrap" title="点击更换头像">
+                    <img id="avatar" src="https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png" alt="用户头像" class="profile-avatar">
+                    <span class="profile-avatar-hint">更换头像</span>
+                    <input type="file" id="avatarInput" accept="image/*" style="display:none;">
+                </div>
+            </div>
+            <div class="info-list">
+                <div class="info-item"><span class="label">昵称</span><span id="nickname">-</span></div>
+                <div class="info-item"><span class="label">性别</span><span id="gender">-</span></div>
+                <div class="info-item"><span class="label">年龄</span><span id="age">-</span></div>
+                <div class="info-item"><span class="label">用户名</span><span id="username">-</span></div>
+                <div class="info-item"><span class="label">手机号</span><span id="phone">-</span></div>
+                <div class="info-item"><span class="label">账户状态</span><span class="tag success" id="status">-</span></div>
+            </div>
+            <button class="btn" type="button" id="modifyBtn">修改信息</button>
+        </div>
+    </section>
+
+    <!-- 预约记录 -->
+    <section class="panel">
+        <div class="toolbar" style="margin-bottom:12px;">
+            <h2 class="panel-title" style="margin:0;">我的预约记录</h2>
+            <input class="input" type="text" id="recordSearch" placeholder="搜索场地名称" style="width:200px;">
+            <button class="btn" type="button" id="refreshRecordsBtn">刷新</button>
+        </div>
+        <div class="table-wrap">
+            <table id="recordTable">
+                <thead>
+                <tr>
+                    <th>序号</th>
+                    <th>场地</th>
+                    <th>预约日期</th>
+                    <th>开始时间</th>
+                    <th>结束时间</th>
+                    <th>创建时间</th>
+                    <th>状态</th>
+                    <th>验证码</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <div id="recordPagination" class="pagination"></div>
+    </section>
+</div>
+
+<div id="modifyModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>修改个人信息</h3>
+            <button class="close-btn" type="button" id="closeModify">&times;</button>
+        </div>
+        <form id="modifyForm" class="form-grid">
+            <div class="form-grid-2col">
+                <label>
+                    昵称
+                    <input class="input" type="text" id="modalNickname" required>
+                </label>
+                <label>
+                    性别
+                    <select class="select" id="modalGender" required>
+                        <option value="男">男</option>
+                        <option value="女">女</option>
+                    </select>
+                </label>
+                <label>
+                    年龄
+                    <input class="input" type="number" id="modalAge" min="0" max="100" required>
+                </label>
+                <label>
+                    手机号
+                    <input class="input" type="tel" id="modalPhone" maxlength="11" placeholder="不修改则留空">
+                </label>
+            </div>
+            <div class="sms-row">
+                <label style="flex:1;">
+                    验证码
+                    <input class="input" id="modalSmsCode" type="text" maxlength="6" placeholder="6位验证码">
+                </label>
+                <button type="button" id="modalSendSmsBtn" class="btn sms-btn">获取验证码</button>
+            </div>
+
+            <button type="button" class="btn secondary" id="togglePasswordBtn" style="width:100%;">修改密码 ▾</button>
+            <div id="passwordFields" style="display:none;">
+                <div class="form-grid-2col">
+                    <label>
+                        新密码
+                        <input class="input" type="password" id="modalNewPassword" placeholder="6-20位">
+                    </label>
+                    <label>
+                        确认密码
+                        <input class="input" type="password" id="modalConfirmPassword" placeholder="再次输入">
+                    </label>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn secondary" type="button" id="cancelModify">取消</button>
+                <button class="btn" type="submit">保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/info.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+# Build output
+target/
+
+# IDE and local agent settings
+.idea/
+.claude/
+.codex-remote-inspect/
+
+# Local environment overrides
+.env
+.env.*
+!.env.example
+
+# Logs and operating system files
+*.log
+.DS_Store
+Thumbs.db

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户管理</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="page">
+    <section class="panel">
+        <h2 class="panel-title">用户管理</h2>
+        <div class="toolbar" style="margin-bottom:16px;">
+            <input class="input" type="text" id="searchKeyword" placeholder="搜索昵称/用户名/手机号" style="width:260px;">
+            <select class="select" id="filterStatus">
+                <option value="">全部状态</option>
+                <option value="active">正常</option>
+                <option value="restricted">已限制</option>
+            </select>
+            <button class="btn" type="button" id="searchBtn">搜索</button>
+            <button class="btn secondary" type="button" id="resetFilterBtn">重置</button>
+        </div>
+    </section>
+    <section class="panel">
+        <div class="table-wrap">
+            <table id="userTable">
+                <thead>
+                <tr>
+                    <th>序号</th>
+                    <th>头像</th>
+                    <th>昵称</th>
+                    <th>用户名</th>
+                    <th>手机号</th>
+                    <th>状态</th>
+                    <th>爽约次数</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <div id="pagination" class="pagination"></div>
+    </section>
+</div>
+<script src="js/api.js"></script>
+<script src="js/admin-users.js"></script>
+</body>
+</html>

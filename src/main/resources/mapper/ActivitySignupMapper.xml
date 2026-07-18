@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.badminton.mapper.ActivitySignupMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO activity_signups (activity_id, user_id, name, phone, participant_count)
+        VALUES (#{activityId}, #{userId}, #{name}, #{phone}, #{participantCount})
+    </insert>
+
+    <select id="selectAll" resultType="com.badminton.entity.ActivitySignup">
+        SELECT * FROM activity_signups
+    </select>
+
+    <select id="findByActivityId" resultType="com.badminton.entity.ActivitySignup">
+        SELECT * FROM activity_signups WHERE activity_id = #{activityId}
+    </select>
+
+    <select id="findByActivityIdAndUserId" resultType="com.badminton.entity.ActivitySignup">
+        SELECT * FROM activity_signups WHERE activity_id = #{activityId} AND user_id = #{userId}
+    </select>
+
+    <delete id="deleteById">
+        DELETE FROM activity_signups WHERE id = #{id}
+    </delete>
+
+</mapper>

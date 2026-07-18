@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>羽悦羽毛球场地预约系统 - 管理后台</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="app-shell">
+<header class="topbar">
+    <div class="brand">羽悦 · 管理后台</div>
+    <div class="welcome">
+        <span id="welcomeName">管理员</span>
+        <img id="welcomeAvatar" src="https://picsum.photos/seed/badminton-admin/200/200" alt="头像">
+        <button class="btn secondary logout-btn" type="button" id="logoutBtn">退出</button>
+    </div>
+</header>
+<main class="layout">
+    <nav class="sidebar">
+        <a class="nav-link active" href="admin-courts.html" target="adminFrame">场地管理</a>
+        <a class="nav-link" href="admin-activity.html" target="adminFrame">活动列表</a>
+        <a class="nav-link" href="admin-users.html" target="adminFrame">用户管理</a>
+    </nav>
+    <iframe class="main-frame" name="adminFrame" src="admin-courts.html" title="管理内容"></iframe>
+</main>
+<script src="js/api.js"></script>
+<script>
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+            document.querySelectorAll('.nav-link').forEach(item => item.classList.remove('active'));
+            link.classList.add('active');
+        });
+    });
+
+    apiGet('/user').then(result => {
+        if (result.code === 1 && result.data) {
+            document.getElementById('welcomeName').textContent = `管理员，${result.data.nickname}`;
+            document.getElementById('welcomeAvatar').src = result.data.avatar || 'https://picsum.photos/seed/badminton-admin/200/200';
+            if (result.data.role !== 'admin') {
+                window.location.href = 'index.html';
+            }
+        }
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+        await apiPost('/logout', {});
+        window.location.href = 'login.html';
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.badminton.mapper.OperationLogMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO operation_logs (reservation_id, user_id, operator_id, action, detail, created_at)
+        VALUES (#{reservationId}, #{userId}, #{operatorId}, #{action}, #{detail}, #{createdAt})
+    </insert>
+
+    <select id="findByReservationId" resultType="com.badminton.entity.OperationLog">
+        SELECT * FROM operation_logs WHERE reservation_id = #{reservationId} ORDER BY created_at ASC
+    </select>
+
+</mapper>

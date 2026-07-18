@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>活动列表</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="page">
+    <section class="panel">
+        <h2 class="panel-title">近期活动列表</h2>
+    </section>
+    <div id="activityList" class="empty">加载中...</div>
+</div>
+
+<div id="signupModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>活动报名</h3>
+            <button class="close-btn" type="button" id="closeSignup">&times;</button>
+        </div>
+        <form id="signupForm" class="form-grid">
+            <p id="currentActivity"></p>
+            <label>
+                姓名
+                <input class="input" type="text" id="signupName" required>
+            </label>
+            <label>
+                电话
+                <input class="input" type="tel" id="signupPhone" pattern="1[3-9]\d{9}" required>
+            </label>
+            <label>
+                参与人数
+                <input class="input" type="number" id="participantCount" min="1" max="20" value="1" required>
+            </label>
+            <div class="modal-actions">
+                <button class="btn secondary" type="button" id="cancelSignup">取消</button>
+                <button class="btn" type="submit">提交报名</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<footer class="panel">
+    <p>主办方：山西大学体育学院</p>
+    <p>咨询电话：138XXXX1234（工作日 9:00-17:00）</p>
+</footer>
+
+<script src="js/api.js"></script>
+<script src="js/activity.js"></script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.badminton.mapper.ActivityMapper">
+
+    <select id="selectById" resultType="com.badminton.entity.Activity">
+        SELECT * FROM activities WHERE id = #{id}
+    </select>
+
+    <select id="selectAll" resultType="com.badminton.entity.Activity">
+        SELECT * FROM activities ORDER BY activity_time DESC
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO activities (title, activity_time, location, description, image_url)
+        VALUES (#{title}, #{activityTime}, #{location}, #{description}, #{imageUrl})
+    </insert>
+
+    <update id="updateById">
+        UPDATE activities
+        SET title        = #{title},
+            activity_time = #{activityTime},
+            location     = #{location},
+            description  = #{description},
+            image_url    = #{imageUrl}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM activities WHERE id = #{id}
+    </delete>
+
+</mapper>

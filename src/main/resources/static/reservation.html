@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>场地预约</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="page">
+    <section class="panel">
+        <h2 class="panel-title">场地预约</h2>
+        <div class="toolbar">
+            <div class="field-row">
+                <span class="label">查询日期</span>
+                <div class="segmented" id="dateGroup">
+                    <button class="segment selected" type="button" data-offset="0">今天 <span id="today"></span></button>
+                    <button class="segment" type="button" data-offset="1">明天 <span id="tomorrow"></span></button>
+                    <button class="segment" type="button" data-offset="2">后天 <span id="afterTomorrow"></span></button>
+                </div>
+            </div>
+            <div class="field-row">
+                <span class="label">时间段</span>
+                <select class="select" id="startTime">
+                    <option value="">开始时间</option>
+                    <option value="8">08:00</option>
+                    <option value="9">09:00</option>
+                    <option value="10">10:00</option>
+                    <option value="11">11:00</option>
+                    <option value="12">12:00</option>
+                    <option value="13">13:00</option>
+                    <option value="14">14:00</option>
+                    <option value="15">15:00</option>
+                    <option value="16">16:00</option>
+                    <option value="17">17:00</option>
+                    <option value="18">18:00</option>
+                    <option value="19">19:00</option>
+                    <option value="20">20:00</option>
+                </select>
+                <span class="label">至</span>
+                <select class="select" id="endTime" disabled>
+                    <option value="">结束时间</option>
+                </select>
+            </div>
+            <button class="btn" type="button" id="queryBtn">查询</button>
+            <button class="btn secondary" type="button" id="resetBtn">重置</button>
+        </div>
+    </section>
+
+    <div id="courtContainer" class="empty">正在查询当前时间段的场地情况...</div>
+</div>
+
+<div id="confirmModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>确认预约</h3>
+            <button class="close-btn" type="button" id="modalClose">&times;</button>
+        </div>
+        <div class="form-grid">
+            <p>场地：<strong id="modalCourtName"></strong></p>
+            <p>日期：<strong id="modalDate"></strong></p>
+            <p>时间：<strong id="modalTime"></strong></p>
+            <div>
+                <p style="margin:0 0 8px;color:#4c596b;">已预约球友：</p>
+                <div id="modalPlayers"></div>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn secondary" type="button" id="cancelReservation">取消</button>
+            <button class="btn" type="button" id="confirmReservation">确认预约</button>
+        </div>
+    </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/reservation.js"></script>
+</body>
+</html>
