@@ -53,8 +53,8 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       # ---- 阿里云 OSS / SMS（部署前替换为真实值） ----
-      OSS_ACCESS_KEY_ID: ${OSS_ACCESS_KEY_ID}
-      OSS_ACCESS_KEY_SECRET: ${OSS_ACCESS_KEY_SECRET}
+      ALIBABA_CLOUD_ACCESS_KEY_ID: ${ALIBABA_CLOUD_ACCESS_KEY_ID:?ALIBABA_CLOUD_ACCESS_KEY_ID is required}
+      ALIBABA_CLOUD_ACCESS_KEY_SECRET: ${ALIBABA_CLOUD_ACCESS_KEY_SECRET:?ALIBABA_CLOUD_ACCESS_KEY_SECRET is required}
     depends_on:
       mysql:
         condition: service_healthy
