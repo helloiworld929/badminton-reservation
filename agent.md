@@ -68,7 +68,7 @@ docker compose --env-file /etc/badminton/badminton.env up -d
 
 部署验收依次检查 `docker compose config`、`docker compose ps`、`curl -f http://localhost:8080/` 和应用日志。OSS/SMS 只在需要时做受控的上传或短信测试，不在应用启动时自动调用外部服务。
 
-提交前运行 `git diff --check` 和 `mvn -q package`。当前 `src/test` 目录中没有测试类。
+提交前运行 `git diff --check` 和 `mvn -q test`。测试使用 JUnit 5、Mockito 和 Spring Boot Test；当前测试不连接真实数据库、Redis、OSS 或短信服务。
 
 ## 配置说明
 

@@ -1,6 +1,7 @@
 package com.badminton.service;
 
 import com.badminton.common.BusinessException;
+import com.badminton.config.ReservationProperties;
 import com.badminton.dto.request.CreateReservationRequest;
 import com.badminton.dto.response.CourtAvailabilityVO;
 import com.badminton.dto.response.PageResult;
@@ -10,13 +11,13 @@ import com.badminton.mapper.*;
 import com.github.pagehelper.PageHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.Clock;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -32,32 +33,22 @@ public class ReservationService {
     private static final String DEFAULT_AVATAR = "https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png";
     private static final DateTimeFormatter DT_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    @Value("${app.reservation.max-players-per-court:4}")
-    private int maxPlayersPerCourt;
-
-    @Value("${app.reservation.start-hour:8}")
-    private int startHour;
-
-    @Value("${app.reservation.end-hour:20}")
-    private int endHour;
-
-    @Value("${app.reservation.checkin-advance-minutes:15}")
-    private int checkinAdvanceMinutes;
-
-    @Value("${app.reservation.noshow-grace-minutes:30}")
-    private int noshowGraceMinutes;
-
+    private final ReservationProperties properties;
+    private final Clock clock;
     private final ReservationMapper reservationMapper;
     private final CourtMapper courtMapper;
     private final OperationLogMapper operationLogMapper;
     private final UserMapper userMapper;
 
     public ReservationService(ReservationMapper reservationMapper, CourtMapper courtMapper,
-                              OperationLogMapper operationLogMapper, UserMapper userMapper) {
+                              OperationLogMapper operationLogMapper, UserMapper userMapper,
+                              ReservationProperties properties, Clock clock) {
         this.reservationMapper = reservationMapper;
         this.courtMapper = courtMapper;
         this.operationLogMapper = operationLogMapper;
         this.userMapper = userMapper;
+        this.properties = properties;
+        this.clock = clock;
     }
 
     // ==== 查询可用场地 ====
@@ -86,7 +77,7 @@ public class ReservationService {
                 players.add(new CourtAvailabilityVO.PlayerSlotVO(avatar, gender, nickname));
             }
     // 不足最大人数的位置补空位占位
-            while (players.size() < maxPlayersPerCourt) {
+            while (players.size() < properties.getMaxPlayersPerCourt()) {
                 players.add(new CourtAvailabilityVO.PlayerSlotVO(DEFAULT_AVATAR, 0, null));
             }
             vo.setPlayers(players);
@@ -97,7 +88,7 @@ public class ReservationService {
             } else if (court.getStatus() != null && court.getStatus() == 2) {
                 vo.setStatus(2);
                 vo.setStatusDisplay("维护中");
-            } else if (courtRes.size() >= maxPlayersPerCourt) {
+            } else if (courtRes.size() >= properties.getMaxPlayersPerCourt()) {
                 vo.setStatus(3);
                 vo.setStatusDisplay("已满");
             } else {
@@ -123,12 +114,12 @@ public class ReservationService {
 
         // 拒绝过去时间段的预约
         LocalDateTime reserveStart = LocalDateTime.of(date, LocalTime.of(startTime, 0));
-        if (reserveStart.isBefore(LocalDateTime.now())) {
+        if (reserveStart.isBefore(now())) {
             throw new BusinessException("不能预约过去的时间段");
         }
 
         // 只能预约今天、明天、后天
-        if (date.isAfter(LocalDate.now().plusDays(2))) {
+        if (date.isAfter(today().plusDays(2))) {
             throw new BusinessException("只能预约今天、明天或后天");
         }
 
@@ -144,7 +135,9 @@ public class ReservationService {
             throw new BusinessException("该场地暂不可预约");
 
         int count = reservationMapper.countActiveByCourtSlot(req.getCourtId(), date, startTime);
-        if (count >= maxPlayersPerCourt) throw new BusinessException("该场地当前时间段已满" + maxPlayersPerCourt + "人");
+        if (count >= properties.getMaxPlayersPerCourt()) {
+            throw new BusinessException("该场地当前时间段已满" + properties.getMaxPlayersPerCourt() + "人");
+        }
 
         // 检查预约限制
         List<Reservation> existing = reservationMapper.findByUser(userId);
@@ -191,7 +184,7 @@ public class ReservationService {
         reservation.setStatus("unverified");
         reservation.setVerificationCode(randomCode()); // 6位随机核销码
 
-        reservation.setCreatedAt(LocalDateTime.now());
+        reservation.setCreatedAt(now());
         reservationMapper.insert(reservation);
 
         logOperation(reservation.getId(), userId, null, "create", "创建预约");
@@ -225,12 +218,12 @@ public class ReservationService {
             ReservationVO vo = new ReservationVO();
             vo.setId(0L);
             vo.setCourtName("测试场地");
-            vo.setReserveDate(LocalDate.now().toString());
+        vo.setReserveDate(today().toString());
             vo.setStartTime(10);
             vo.setEndTime(11);
             vo.setStatus("verified");
             vo.setStatusDisplay("已验证");
-            vo.setCreatedAt(LocalDateTime.now().format(DT_FMT));
+        vo.setCreatedAt(now().format(DT_FMT));
             return vo;
         }
 
@@ -250,11 +243,11 @@ public class ReservationService {
         // 检查时间窗口
         LocalDateTime reserveStart = LocalDateTime.of(reservation.getReserveDate(),
                 LocalTime.of(reservation.getStartTime(), 0));
-        long minutesUntil = ChronoUnit.MINUTES.between(LocalDateTime.now(), reserveStart);
-        if (minutesUntil > checkinAdvanceMinutes) throw new BusinessException("尚未到核销时间");
+        long minutesUntil = ChronoUnit.MINUTES.between(now(), reserveStart);
+        if (minutesUntil > properties.getCheckinAdvanceMinutes()) throw new BusinessException("尚未到核销时间");
 
         reservation.setStatus("verified");
-        reservation.setVerifiedAt(LocalDateTime.now());
+        reservation.setVerifiedAt(now());
         reservation.setVerifiedBy(operatorId);
         reservationMapper.updateById(reservation);
 
@@ -304,7 +297,7 @@ public class ReservationService {
     // ==== 定时任务：自动标记爽约 ====
     // 超过预约时间后仍未核销的标记为"爽约"，累计2次爽约则限制用户预约权限
     public void markNoshow() {
-        LocalDateTime cutoff = LocalDateTime.now().minusMinutes(noshowGraceMinutes);
+        LocalDateTime cutoff = now().minusMinutes(properties.getNoshowGraceMinutes());
         String cutoffStr = cutoff.format(DT_FMT);
         List<Reservation> unverifiedList = reservationMapper.findNoshowCandidates(cutoffStr);
         for (Reservation r : unverifiedList) {
@@ -379,9 +372,9 @@ public class ReservationService {
     }
 
     private void validateStartTime(int startTime) {
-        if (startTime < startHour || startTime > endHour)
-            throw new BusinessException("预约开始时间必须在 " + String.format("%02d", startHour)
-                    + ":00 到 " + endHour + ":00 之间");
+        if (startTime < properties.getStartHour() || startTime > properties.getEndHour())
+            throw new BusinessException("预约开始时间必须在 " + String.format("%02d", properties.getStartHour())
+                    + ":00 到 " + properties.getEndHour() + ":00 之间");
     }
 
     private void logOperation(Long reservationId, Long userId, Long operatorId, String action, String detail) {
@@ -391,8 +384,16 @@ public class ReservationService {
         oplog.setOperatorId(operatorId);
         oplog.setAction(action);
         oplog.setDetail(detail);
-        oplog.setCreatedAt(LocalDateTime.now());
+        oplog.setCreatedAt(now());
         operationLogMapper.insert(oplog);
+    }
+
+    private LocalDateTime now() {
+        return LocalDateTime.now(clock);
+    }
+
+    private LocalDate today() {
+        return LocalDate.now(clock);
     }
 
     public Reservation getById(long reservationId) {
