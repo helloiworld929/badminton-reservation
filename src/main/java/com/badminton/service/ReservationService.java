@@ -104,6 +104,7 @@ public class ReservationService {
     // 含多项校验：时间范围（过去/未来>2天不允）、场地状态、人数上限、用户每日最多2次、总共最多4个未核销、同时间段不可重复
     @Transactional
     public ReservationVO create(long userId, CreateReservationRequest req) {
+        validateDailyOpenTime();
         LocalDate date = parseDate(req.getDate());
         int startTime = req.getStartTime();
         int endTime = req.getEndTime();
@@ -375,6 +376,15 @@ public class ReservationService {
         if (startTime < properties.getStartHour() || startTime > properties.getEndHour())
             throw new BusinessException("预约开始时间必须在 " + String.format("%02d", properties.getStartHour())
                     + ":00 到 " + properties.getEndHour() + ":00 之间");
+    }
+
+    /** 每天达到开放时间后才允许创建预约，查询场地可用性不受影响。 */
+    private void validateDailyOpenTime() {
+        LocalTime currentTime = LocalTime.now(clock);
+        if (currentTime.isBefore(properties.getDailyOpenTime())) {
+            throw new BusinessException("每天 " + properties.getDailyOpenTime()
+                    + " 后才开始接受预约");
+        }
     }
 
     private void logOperation(Long reservationId, Long userId, Long operatorId, String action, String detail) {

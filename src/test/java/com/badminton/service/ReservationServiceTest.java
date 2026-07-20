@@ -1,6 +1,7 @@
 package com.badminton.service;
 
 import com.badminton.common.BusinessException;
+import com.badminton.config.ReservationProperties;
 import com.badminton.dto.request.CreateReservationRequest;
 import com.badminton.dto.response.CourtAvailabilityVO;
 import com.badminton.dto.response.ReservationVO;
@@ -28,6 +29,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
@@ -55,6 +57,9 @@ class ReservationServiceTest {
 
     @Autowired
     private ReservationService reservationService;
+
+    @Autowired
+    private ReservationProperties reservationProperties;
 
     @MockBean
     private ReservationMapper reservationMapper;
@@ -114,6 +119,18 @@ class ReservationServiceTest {
 
         assertEquals("您的账户已被限制，无法预约，请联系管理员", exception.getMessage());
         verify(courtMapper, never()).selectById(anyLong());
+    }
+
+    @Test
+    // 每天开放预约时间之前，创建预约请求应被拒绝。
+    void createRejectsBeforeDailyOpenTime() {
+        reservationProperties.setDailyOpenTime(LocalTime.of(14, 0));
+
+        BusinessException exception = assertThrows(BusinessException.class,
+                () -> reservationService.create(7L, request(1L, TOMORROW, 12, 13)));
+
+        assertEquals("每天 14:00 后才开始接受预约", exception.getMessage());
+        reservationProperties.setDailyOpenTime(LocalTime.MIDNIGHT);
     }
 
     @Test

@@ -5,6 +5,8 @@ import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalTime;
+
 /**
  * 预约规则配置，集中管理并支持在测试中直接构造。
  */
@@ -25,4 +27,6 @@ public class ReservationProperties {
     private int checkinAdvanceMinutes = 15;
     /** 超过预约开始时间多久后标记为爽约（分钟）。 */
     private int noshowGraceMinutes = 30;
+    /** 每天开始接受预约的时间。 */
+    private LocalTime dailyOpenTime = LocalTime.MIDNIGHT;
 }
