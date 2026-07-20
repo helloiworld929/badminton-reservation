@@ -1,0 +1,103 @@
+# ===== Server =====
+server:
+  port: 8080
+  servlet:
+    session:
+      timeout: 7200
+
+# ===== Spring =====
+spring:
+  application:
+    name: badminton-reservation
+
+  # DataSource
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/badminton?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PASSWORD}
+
+  # File Upload
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+  # Session
+  session:
+    store-type: none
+
+  # Redis
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:}
+    database: 0
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 0
+        max-wait: -1ms
+
+# ===== MyBatis =====
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  mapper-locations: classpath:mapper/*.xml
+
+# ===== PageHelper =====
+pagehelper:
+  helper-dialect: mysql
+  reasonable: true
+  support-methods-arguments: true
+
+# ===== 预约业务配置 =====
+app:
+  # 预约业务配置
+  reservation:
+    # 每块场地允许的最大预约人数
+    max-players-per-court: 4
+    # 可预约的开始小时（24小时制）
+    start-hour: 8
+    # 可预约的结束小时（24小时制）
+    end-hour: 20
+    # 支付超时时间（分钟）
+    payment-timeout-minutes: 15
+    # 可提前核销的时间（分钟）
+    checkin-advance-minutes: 15
+    # 超过预约开始时间多久后标记为爽约（分钟）
+    noshow-grace-minutes: 30
+    # 每天开始接受预约的时间，格式为 HH:mm；例如 14:00 表示每天 14:00 前不能创建预约
+    daily-open-time: "00:00"
+
+  # 定时任务开关；测试环境设为 false，生产环境默认开启
+  scheduling:
+    enabled: true
+
+  # 取消退款规则
+  cancel:
+    full-refund-hours: 2
+    half-refund-minutes: 30
+    no-refund-minutes: 30
+
+  # 阿里云 OSS
+  oss:
+    # OSS 和短信服务共用的阿里云 AccessKey，必须通过环境变量提供
+    endpoint: oss-cn-beijing.aliyuncs.com
+    access-key-id: ${ALIBABA_CLOUD_ACCESS_KEY_ID}
+    access-key-secret: ${ALIBABA_CLOUD_ACCESS_KEY_SECRET}
+    bucket-name: my-study-javaweb
+    base-url: https://my-study-javaweb.oss-cn-beijing.aliyuncs.com/
+
+  # 阿里云短信
+  sms:
+    # 短信签名和模板配置，凭据复用上面的阿里云 AccessKey
+    access-key-id: ${ALIBABA_CLOUD_ACCESS_KEY_ID}
+    access-key-secret: ${ALIBABA_CLOUD_ACCESS_KEY_SECRET}
+    # YAML 默认 UTF-8 编码，直接写中文即可，不需要 Unicode 转义
+    sign-name: 恒创联众
+    template-code: "100001"
+    code-length: 6
+    code-expire-seconds: 300
