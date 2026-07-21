@@ -1044,6 +1044,10 @@ button {
     justify-content: space-between;
 }
 
+.forum-detail-page > .panel {
+    max-width: 836px;
+}
+
 .forum-detail-heading h1 {
     margin: 14px 0 12px;
     color: #00547d;
