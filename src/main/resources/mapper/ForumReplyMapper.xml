@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.badminton.mapper.ForumReplyMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO forum_replies (post_id, user_id, content, status, created_at)
+        VALUES (#{postId}, #{userId}, #{content}, #{status}, #{createdAt})
+    </insert>
+
+    <select id="selectById" resultType="com.badminton.entity.ForumReply">
+        SELECT r.id, r.post_id, r.user_id, r.content, r.status,
+               r.handled_by, r.handled_at, r.created_at,
+               u.nickname AS author_nickname, u.avatar AS author_avatar
+        FROM forum_replies r
+        JOIN users u ON u.id = r.user_id
+        WHERE r.id = #{id}
+    </select>
+
+    <select id="findByPost" resultType="com.badminton.entity.ForumReply">
+        SELECT r.id, r.post_id, r.user_id, r.content, r.status,
+               r.handled_by, r.handled_at, r.created_at,
+               u.nickname AS author_nickname, u.avatar AS author_avatar
+        FROM forum_replies r
+        JOIN users u ON u.id = r.user_id
+        WHERE r.post_id = #{postId}
+        <if test="status != null and status != ''">AND r.status = #{status}</if>
+        ORDER BY r.created_at ASC, r.id ASC
+    </select>
+
+    <update id="softDeleteByAuthor">
+        UPDATE forum_replies SET status = 'deleted'
+        WHERE id = #{id} AND user_id = #{userId} AND status = 'normal'
+    </update>
+
+    <update id="updateStatus">
+        UPDATE forum_replies
+        SET status = #{status}, handled_by = #{operatorId}, handled_at = NOW()
+        WHERE id = #{id}
+    </update>
+</mapper>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>论坛讨论</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="page forum-page">
+    <section class="panel">
+        <div class="forum-page-header">
+            <div>
+                <h2 class="panel-title">论坛讨论</h2>
+                <p class="forum-subtitle">分享约球信息、技术心得和校园羽毛球动态</p>
+            </div>
+        </div>
+        <div class="forum-categories" id="categoryFilter" role="group" aria-label="帖子分类">
+            <button class="forum-category active" type="button" data-category="" aria-pressed="true">全部</button>
+            <button class="forum-category" type="button" data-category="约球组队" aria-pressed="false">约球组队</button>
+            <button class="forum-category" type="button" data-category="技术交流" aria-pressed="false">技术交流</button>
+            <button class="forum-category" type="button" data-category="赛事活动" aria-pressed="false">赛事活动</button>
+            <button class="forum-category" type="button" data-category="场地反馈" aria-pressed="false">场地反馈</button>
+            <button class="forum-category" type="button" data-category="失物招领" aria-pressed="false">失物招领</button>
+            <button class="forum-category" type="button" data-category="其他" aria-pressed="false">其他</button>
+        </div>
+        <div class="forum-action-row">
+            <div class="forum-search-group">
+                <input class="input forum-search" id="keywordInput" type="search" maxlength="80" placeholder="搜索标题或正文">
+                <button class="btn secondary" type="button" id="searchBtn">搜索</button>
+            </div>
+            <button class="btn forum-publish-btn" type="button" id="openPostModal">发布帖子</button>
+        </div>
+    </section>
+
+    <div id="postList" class="forum-list"><div class="empty">加载中...</div></div>
+    <div id="postLoadMore" class="forum-load-more"></div>
+</div>
+
+<div id="postModal" class="modal">
+    <div class="modal-content forum-post-modal">
+        <div class="modal-header">
+            <h3>发布新帖子</h3>
+            <button class="close-btn" type="button" id="closePostModal">&times;</button>
+        </div>
+        <form id="postForm" class="form-grid">
+            <div class="forum-post-basic-fields">
+                <label>标题
+                    <input class="input" id="postTitle" name="title" minlength="5" maxlength="80" required placeholder="5-80个字符">
+                </label>
+                <label>分类
+                    <select class="select" id="postCategory" name="category" required>
+                        <option value="">请选择分类</option>
+                        <option>约球组队</option><option>技术交流</option><option>赛事活动</option>
+                        <option>场地反馈</option><option>失物招领</option><option>其他</option>
+                    </select>
+                </label>
+            </div>
+            <label>正文
+                <textarea class="textarea forum-post-content" id="postContent" name="content" maxlength="2000" required placeholder="使用纯文本描述你的话题"></textarea>
+            </label>
+            <div class="forum-upload-field">
+                <span class="forum-field-label">帖子图片</span>
+                <div class="forum-upload-row">
+                    <label class="forum-upload-trigger" for="postImages">
+                        <span class="forum-upload-plus" aria-hidden="true">+</span>
+                        <span class="forum-upload-copy">
+                            <strong>添加图片</strong>
+                            <small>最多3张，每张不超过5MB</small>
+                        </span>
+                    </label>
+                    <input class="forum-file-input" id="postImages" type="file" accept="image/*" multiple>
+                    <div id="imagePreview" class="forum-image-preview"></div>
+                </div>
+            </div>
+            <p id="postMessage" class="form-message"></p>
+            <div class="modal-actions">
+                <button class="btn secondary" type="button" id="cancelPost">取消</button>
+                <button class="btn" type="submit" id="publishBtn">发布</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/forum.js"></script>
+</body>
+</html>

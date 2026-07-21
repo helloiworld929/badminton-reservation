@@ -57,6 +57,15 @@ public class OssService {
         return url;
     }
 
+    /** 删除由本服务生成的 OSS URL，主要用于上传成功但业务保存失败时的补偿。 */
+    public void deleteByUrl(String url) {
+        if (url == null || !url.startsWith(baseUrl)) return;
+        String objectName = url.substring(baseUrl.length());
+        if (!objectName.isBlank()) {
+            ossClient.deleteObject(bucketName, objectName);
+        }
+    }
+
     private void validateFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("文件不能为空");

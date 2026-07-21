@@ -26,7 +26,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiResponse<?> handleMaxUploadSize(org.springframework.web.multipart.MaxUploadSizeExceededException e) {
-        return ApiResponse.failure("文件大小超出限制，最大支持 10MB");
+        return ApiResponse.failure("图片大小超出限制，单张最多5MB");
     }
 
     @ExceptionHandler(Exception.class)

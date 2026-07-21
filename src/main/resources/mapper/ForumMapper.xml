@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.badminton.mapper.ForumMapper">
+    <insert id="insertPost" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO forum_posts
+        (user_id, title, content, category, status, is_pinned, view_count, created_at, updated_at)
+        VALUES
+        (#{userId}, #{title}, #{content}, #{category}, #{status}, #{pinned}, #{viewCount}, #{createdAt}, #{updatedAt})
+    </insert>
+
+    <insert id="insertImage" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO forum_post_images (post_id, image_url, sort_order, status, created_at)
+        VALUES (#{postId}, #{imageUrl}, #{sortOrder}, #{status}, #{createdAt})
+    </insert>
+
+    <sql id="postColumns">
+        p.id, p.user_id, p.title, p.content, p.category, p.status,
+        p.is_pinned AS pinned, p.view_count, p.handled_by, p.handled_at,
+        p.created_at, p.updated_at,
+        u.nickname AS author_nickname, u.avatar AS author_avatar,
+        (SELECT COUNT(*) FROM forum_replies r
+         WHERE r.post_id = p.id AND r.status = 'normal') AS reply_count
+    </sql>
+
+    <select id="selectPostById" resultType="com.badminton.entity.ForumPost">
+        SELECT <include refid="postColumns"/>
+        FROM forum_posts p
+        JOIN users u ON u.id = p.user_id
+        WHERE p.id = #{id}
+    </select>
+
+    <select id="findPosts" resultType="com.badminton.entity.ForumPost">
+        SELECT <include refid="postColumns"/>
+        FROM forum_posts p
+        JOIN users u ON u.id = p.user_id
+        <where>
+            <if test="status != null and status != ''">p.status = #{status}</if>
+            <if test="category != null and category != ''">AND p.category = #{category}</if>
+            <if test="keyword != null and keyword != ''">
+                AND (p.title LIKE CONCAT('%', #{keyword}, '%')
+                OR p.content LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+        ORDER BY p.is_pinned DESC, p.created_at DESC, p.id DESC
+    </select>
+
+    <select id="findImages" resultType="com.badminton.entity.ForumPostImage">
+        SELECT id, post_id, image_url, sort_order, status, created_at
+        FROM forum_post_images
+        WHERE post_id = #{postId}
+        <if test="status != null and status != ''">AND status = #{status}</if>
+        ORDER BY sort_order ASC, id ASC
+    </select>
+
+    <update id="incrementViewCount">
+        UPDATE forum_posts SET view_count = view_count + 1 WHERE id = #{id} AND status = 'normal'
+    </update>
+
+    <update id="softDeleteByAuthor">
+        UPDATE forum_posts
+        SET status = 'deleted', is_pinned = 0, updated_at = NOW()
+        WHERE id = #{id} AND user_id = #{userId} AND status = 'normal'
+    </update>
+
+    <update id="updatePostStatus">
+        UPDATE forum_posts
+        SET status = #{status}, handled_by = #{operatorId}, handled_at = NOW(),
+            is_pinned = CASE WHEN #{status} = 'normal' THEN is_pinned ELSE 0 END
+        WHERE id = #{id}
+    </update>
+
+    <update id="updatePinned">
+        UPDATE forum_posts
+        SET is_pinned = #{pinned}, handled_by = #{operatorId}, handled_at = NOW()
+        WHERE id = #{id} AND status = 'normal'
+    </update>
+
+    <update id="updateImageStatusByPost">
+        UPDATE forum_post_images SET status = #{status} WHERE post_id = #{postId}
+    </update>
+</mapper>

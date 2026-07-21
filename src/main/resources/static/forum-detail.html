@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>帖子详情</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="page forum-page">
+    <section class="panel forum-detail-toolbar">
+        <button class="btn secondary" type="button" id="backBtn">返回论坛</button>
+        <div id="postActions" class="forum-inline-actions"></div>
+    </section>
+    <article id="postDetail" class="panel forum-detail"><div class="empty">加载中...</div></article>
+
+    <section class="panel">
+        <h2 class="panel-title">回复</h2>
+        <form id="replyForm" class="forum-reply-form">
+            <textarea class="textarea" id="replyContent" maxlength="500" required placeholder="输入回复内容"></textarea>
+            <button class="btn" type="submit">发表回复</button>
+        </form>
+        <div id="replyList" class="forum-replies"></div>
+        <div id="replyPagination" class="pagination"></div>
+    </section>
+</div>
+
+<div id="reportModal" class="modal">
+    <div class="modal-content forum-report-modal">
+        <div class="modal-header">
+            <h3>举报内容</h3>
+            <button class="close-btn" type="button" id="closeReportModal">&times;</button>
+        </div>
+        <form id="reportForm" class="form-grid">
+            <label>举报原因
+                <select class="select" id="reportReason" required>
+                    <option value="">请选择原因</option>
+                    <option>广告</option><option>辱骂</option><option>人身攻击</option>
+                    <option>违规图片</option><option>其他</option>
+                </select>
+            </label>
+            <div class="modal-actions">
+                <button class="btn secondary" type="button" id="cancelReport">取消</button>
+                <button class="btn" type="submit">提交举报</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/forum-detail.js"></script>
+</body>
+</html>

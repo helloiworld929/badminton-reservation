@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.badminton.mapper.ForumReportMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO forum_reports
+        (reporter_id, target_type, target_id, reason, status, created_at)
+        VALUES (#{reporterId}, #{targetType}, #{targetId}, #{reason}, #{status}, #{createdAt})
+    </insert>
+
+    <select id="selectById" resultType="com.badminton.entity.ForumReport">
+        SELECT fr.*, u.nickname AS reporter_nickname
+        FROM forum_reports fr
+        JOIN users u ON u.id = fr.reporter_id
+        WHERE fr.id = #{id}
+    </select>
+
+    <select id="countPending" resultType="int">
+        SELECT COUNT(*) FROM forum_reports
+        WHERE reporter_id = #{reporterId} AND target_type = #{targetType}
+          AND target_id = #{targetId} AND status = 'pending'
+    </select>
+
+    <select id="findAll" resultType="com.badminton.entity.ForumReport">
+        SELECT fr.*, u.nickname AS reporter_nickname
+        FROM forum_reports fr
+        JOIN users u ON u.id = fr.reporter_id
+        <if test="status != null and status != ''">WHERE fr.status = #{status}</if>
+        ORDER BY CASE WHEN fr.status = 'pending' THEN 0 ELSE 1 END,
+                 fr.created_at DESC, fr.id DESC
+    </select>
+
+    <update id="handle">
+        UPDATE forum_reports
+        SET status = #{status}, result = #{result}, handled_by = #{operatorId}, handled_at = NOW()
+        WHERE id = #{id}
+    </update>
+</mapper>

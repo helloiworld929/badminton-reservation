@@ -23,7 +23,7 @@
 - `src/main/resources/mapper`：MyBatis SQL XML。Mapper 接口方法必须与 XML 的 statement id 保持一致。
 - `src/main/resources/schema.sql`：数据库结构和非敏感的初始参考数据。
 - `src/main/resources/static`：浏览器页面和前端 API 调用。
-- `src/main/resources/application.properties`：运行配置和环境变量绑定。
+- `src/main/resources/application.yml`：运行配置和环境变量绑定。
 - `Dockerfile`、`docker-compose.yml`：容器化本地运行和部署配置。
 
 ## 常用命令
@@ -70,9 +70,26 @@ docker compose --env-file /etc/badminton/badminton.env up -d
 
 提交前运行 `git diff --check` 和 `mvn -q test`。测试使用 JUnit 5、Mockito 和 Spring Boot Test；当前测试不连接真实数据库、Redis、OSS 或短信服务。
 
+## 论坛讨论模块
+
+论坛沿用现有 Spring Boot、MyBatis、MySQL、静态 HTML/JavaScript 和 OSS，不额外引入前端框架或新基础设施。
+
+- 用户端页面：`forum.html`、`forum-detail.html`；管理端页面：`admin-forum.html`。
+- 后端入口：`ForumController`、`AdminForumController`，业务规则统一放在 `ForumService`。
+- 数据表：`forum_posts`、`forum_post_images`、`forum_replies`、`forum_reports`。
+- 所有论坛页面和接口必须登录后使用；`/admin/forum/**` 只能由 `admin` 角色访问。
+- 帖子固定分类为约球组队、技术交流、赛事活动、场地反馈、失物招领、其他。
+- 帖子和回复发布后不可编辑。作者只能删除自己的 `normal` 状态内容，删除为逻辑删除。
+- 帖子最多上传 3 张图片，每张不超过 5MB。图片写库失败时补偿删除本次 OSS 上传；逻辑删除后暂不物理删除 OSS 文件。
+- 用户打开帖子详情时将 `view_count` 原子加一，管理端查看不增加访问次数。
+- 举报原因固定为广告、辱骂、人身攻击、违规图片、其他，待管理员处理后改为已处理或已驳回。
+- 论坛核心规则由 `ForumServiceTest` 覆盖，登录和管理权限、multipart 发帖由 `ForumControllerTest` 覆盖。
+
+全新数据库由 `schema.sql` 创建论坛表。已有 Docker MySQL 数据卷不会重新执行初始化脚本，应手动执行 `docs/sql/forum-module.sql`，不要对已有数据执行会删除业务表的完整 `schema.sql`。
+
 ## 配置说明
 
-`src/main/resources/application.properties` 使用以下环境变量：
+`src/main/resources/application.yml` 使用以下环境变量：
 
 - `MYSQL_PASSWORD`：应用连接 MySQL 所需，必须提供。
 - `MYSQL_HOST`、`MYSQL_PORT`、`MYSQL_USER`：MySQL 连接参数，未设置时使用本地开发默认值。

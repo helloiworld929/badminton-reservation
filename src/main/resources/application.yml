@@ -20,8 +20,9 @@ spring:
   # File Upload
   servlet:
     multipart:
-      max-file-size: 10MB
-      max-request-size: 10MB
+      # 论坛单张图片限制为 5MB，一次最多上传 3 张
+      max-file-size: 5MB
+      max-request-size: 16MB
 
   # Session
   session:
