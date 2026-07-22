@@ -5,6 +5,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Mapper
@@ -16,7 +17,11 @@ public interface ReservationMapper {
 
     int insert(Reservation reservation);
 
-    int updateById(Reservation reservation);
+    int transitionStatus(@Param("id") Long id,
+                         @Param("fromStatus") String fromStatus,
+                         @Param("toStatus") String toStatus,
+                         @Param("verifiedAt") LocalDateTime verifiedAt,
+                         @Param("verifiedBy") Long verifiedBy);
 
     List<Reservation> findBySlot(@Param("date") LocalDate date, @Param("startTime") int startTime);
 

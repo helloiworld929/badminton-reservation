@@ -33,12 +33,21 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -112,13 +121,13 @@ class ReservationServiceTest {
     void createRejectsRestrictedUser() {
         User user = new User();
         user.setStatus("restricted");
-        when(userMapper.selectById(7L)).thenReturn(user);
+        when(userMapper.selectByIdForUpdate(7L)).thenReturn(user);
 
         BusinessException exception = assertThrows(BusinessException.class,
                 () -> reservationService.create(7L, request(1L, TOMORROW, 12, 13)));
 
         assertEquals("您的账户已被限制，无法预约，请联系管理员", exception.getMessage());
-        verify(courtMapper, never()).selectById(anyLong());
+        verify(courtMapper, never()).selectByIdForUpdate(anyLong());
     }
 
     @Test
@@ -139,8 +148,8 @@ class ReservationServiceTest {
         User user = new User();
         user.setStatus("active");
         Court court = court(1L, 0);
-        when(userMapper.selectById(7L)).thenReturn(user);
-        when(courtMapper.selectById(1L)).thenReturn(court);
+        when(userMapper.selectByIdForUpdate(7L)).thenReturn(user);
+        when(courtMapper.selectByIdForUpdate(1L)).thenReturn(court);
         when(reservationMapper.countActiveByCourtSlot(1L, TOMORROW, 12)).thenReturn(0);
         when(reservationMapper.findByUser(7L)).thenReturn(Collections.emptyList());
         when(reservationMapper.insert(any(Reservation.class))).thenAnswer(invocation -> {
@@ -158,6 +167,69 @@ class ReservationServiceTest {
     }
 
     @Test
+    // 两个用户同时看到同一个剩余名额时，场地人数不能超过配置上限。
+    void concurrentReservationsCannotExceedCourtCapacity() throws Exception {
+        Court court = court(1L, 0);
+        AtomicInteger persistedReservations = new AtomicInteger(3);
+        CountDownLatch bothRequestsCounted = new CountDownLatch(2);
+        ReentrantLock courtRowLock = new ReentrantLock();
+
+        when(userMapper.selectByIdForUpdate(anyLong())).thenAnswer(invocation -> {
+            User user = new User();
+            user.setId(invocation.getArgument(0, Long.class));
+            user.setStatus("active");
+            return user;
+        });
+        when(courtMapper.selectByIdForUpdate(1L)).thenAnswer(invocation -> {
+            courtRowLock.lock();
+            return court;
+        });
+        when(reservationMapper.findByUser(anyLong())).thenReturn(Collections.emptyList());
+        when(reservationMapper.countActiveByCourtSlot(1L, TOMORROW, 12))
+                .thenAnswer(invocation -> {
+                    // 捕获读取时的同一个快照，再放行两个插入请求。
+                    int observedCount = persistedReservations.get();
+                    bothRequestsCounted.countDown();
+                    bothRequestsCounted.await(250, TimeUnit.MILLISECONDS);
+                    if (observedCount >= 4 && courtRowLock.isHeldByCurrentThread()) {
+                        courtRowLock.unlock();
+                    }
+                    return observedCount;
+                });
+        when(reservationMapper.insert(any(Reservation.class))).thenAnswer(invocation -> {
+            Reservation reservation = invocation.getArgument(0, Reservation.class);
+            reservation.setId((long) persistedReservations.incrementAndGet());
+            if (courtRowLock.isHeldByCurrentThread()) {
+                courtRowLock.unlock();
+            }
+            return 1;
+        });
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            Future<ReservationVO> first = executor.submit(
+                    () -> reservationService.create(7L, request(1L, TOMORROW, 12, 13)));
+            Future<ReservationVO> second = executor.submit(
+                    () -> reservationService.create(8L, request(1L, TOMORROW, 12, 13)));
+
+            for (Future<ReservationVO> result : List.of(first, second)) {
+                try {
+                    result.get();
+                } catch (ExecutionException e) {
+                    if (!(e.getCause() instanceof BusinessException)) {
+                        throw e;
+                    }
+                }
+            }
+
+            assertEquals(4, persistedReservations.get(),
+                    "场地有效预约人数不能超过4人");
+        } finally {
+            executor.shutdownNow();
+        }
+    }
+
+    @Test
     // 用户只能取消自己的未核销预约。
     void cancelUpdatesOwnedReservation() {
         Reservation reservation = new Reservation();
@@ -165,12 +237,31 @@ class ReservationServiceTest {
         reservation.setUserId(7L);
         reservation.setStatus("unverified");
         when(reservationMapper.selectById(100L)).thenReturn(reservation);
+        when(reservationMapper.transitionStatus(
+                100L, "unverified", "cancelled", null, null)).thenReturn(1);
 
         reservationService.cancel(7L, 100L);
 
         assertEquals("cancelled", reservation.getStatus());
-        verify(reservationMapper).updateById(reservation);
+        verify(reservationMapper).transitionStatus(
+                100L, "unverified", "cancelled", null, null);
         verify(operationLogMapper).insert(any());
+    }
+
+    @Test
+    void cancelRejectsNoshowReservation() {
+        Reservation reservation = new Reservation();
+        reservation.setId(100L);
+        reservation.setUserId(7L);
+        reservation.setStatus("noshow");
+        when(reservationMapper.selectById(100L)).thenReturn(reservation);
+
+        BusinessException exception = assertThrows(BusinessException.class,
+                () -> reservationService.cancel(7L, 100L));
+
+        assertEquals("当前预约状态不可取消", exception.getMessage());
+        assertEquals("noshow", reservation.getStatus());
+        verify(reservationMapper, never()).transitionStatus(anyLong(), any(), any(), any(), any());
     }
 
     @Test
@@ -183,7 +274,17 @@ class ReservationServiceTest {
                 () -> reservationService.verify(9L, "123456", null));
 
         assertEquals("尚未到核销时间", exception.getMessage());
-        verify(reservationMapper, never()).updateById(any(Reservation.class));
+        verify(reservationMapper, never()).transitionStatus(anyLong(), any(), any(), any(), any());
+    }
+
+    @Test
+    void verifyDemoCodeReturnsSimulatedSuccessWithoutChangingReservation() {
+        ReservationVO result = reservationService.verify(9L, "888888", null);
+
+        assertEquals(0L, result.getId());
+        assertEquals("verified", result.getStatus());
+        verify(reservationMapper, never()).transitionStatus(anyLong(), any(), any(), any(), any());
+        verify(operationLogMapper, never()).insert(any());
     }
 
     @Test
@@ -191,36 +292,79 @@ class ReservationServiceTest {
     void verifyUpdatesReservationInsideCheckinWindow() {
         Reservation reservation = reservation(100L, 7L, 1L, TODAY, 10, "123456");
         when(reservationMapper.findByVerificationCode("123456")).thenReturn(reservation);
-        when(courtMapper.selectById(1L)).thenReturn(court(1L, 0));
+        when(courtMapper.selectByIdIncludingDeleted(1L)).thenReturn(court(1L, 0));
+        when(reservationMapper.transitionStatus(
+                100L, "unverified", "verified",
+                LocalDateTime.of(TODAY, LocalTime.of(10, 0)), 9L)).thenReturn(1);
 
         ReservationVO result = reservationService.verify(9L, "123456", null);
 
         assertEquals("verified", result.getStatus());
+        assertEquals("测试场地", result.getCourtName());
         assertEquals("verified", reservation.getStatus());
         assertEquals(9L, reservation.getVerifiedBy());
-        verify(reservationMapper).updateById(reservation);
+        verify(reservationMapper).transitionStatus(
+                100L, "unverified", "verified",
+                LocalDateTime.of(TODAY, LocalTime.of(10, 0)), 9L);
         verify(operationLogMapper).insert(any());
+    }
+
+    @Test
+    void verifyRejectsNoshowReservation() {
+        Reservation reservation = reservation(100L, 7L, 1L, TODAY, 10, "123456");
+        reservation.setStatus("noshow");
+        when(reservationMapper.findByVerificationCode("123456")).thenReturn(reservation);
+
+        BusinessException exception = assertThrows(BusinessException.class,
+                () -> reservationService.verify(9L, "123456", null));
+
+        assertEquals("当前预约状态不可核销", exception.getMessage());
+        verify(reservationMapper, never()).transitionStatus(anyLong(), any(), any(), any(), any());
+    }
+
+    @Test
+    void verifyRejectsReservationAfterNoshowGracePeriod() {
+        Reservation reservation = reservation(100L, 7L, 1L, TODAY, 9, "123456");
+        when(reservationMapper.findByVerificationCode("123456")).thenReturn(reservation);
+
+        BusinessException exception = assertThrows(BusinessException.class,
+                () -> reservationService.verify(9L, "123456", null));
+
+        assertEquals("已超过核销时间", exception.getMessage());
+        verify(reservationMapper, never()).transitionStatus(anyLong(), any(), any(), any(), any());
     }
 
     @Test
     // 第二次爽约后，用户状态应被限制。
     void markNoshowRestrictsUserAfterSecondMiss() {
         Reservation reservation = reservation(100L, 7L, 1L, TODAY, 9, "123456");
-        User user = new User();
-        user.setId(7L);
-        user.setNoshowCount(1);
-        user.setStatus("active");
         when(reservationMapper.findNoshowCandidates("2026-07-20 09:30:00"))
                 .thenReturn(Collections.singletonList(reservation));
-        when(userMapper.selectById(7L)).thenReturn(user);
+        when(reservationMapper.transitionStatus(
+                100L, "unverified", "noshow", null, null)).thenReturn(1);
+        when(userMapper.incrementNoshowCountAndRestrict(7L, 2)).thenReturn(1);
 
         reservationService.markNoshow();
 
         assertEquals("noshow", reservation.getStatus());
-        assertEquals(2, user.getNoshowCount());
-        assertEquals("restricted", user.getStatus());
-        verify(reservationMapper).updateById(reservation);
-        verify(userMapper).updateById(user);
+        verify(reservationMapper).transitionStatus(
+                100L, "unverified", "noshow", null, null);
+        verify(userMapper).incrementNoshowCountAndRestrict(7L, 2);
+        verify(operationLogMapper).insert(any());
+    }
+
+    @Test
+    void markNoshowSkipsSideEffectsWhenAnotherWorkerAlreadyUpdatedReservation() {
+        Reservation reservation = reservation(100L, 7L, 1L, TODAY, 9, "123456");
+        when(reservationMapper.findNoshowCandidates("2026-07-20 09:30:00"))
+                .thenReturn(Collections.singletonList(reservation));
+        when(reservationMapper.transitionStatus(
+                100L, "unverified", "noshow", null, null)).thenReturn(0);
+
+        reservationService.markNoshow();
+
+        verify(userMapper, never()).incrementNoshowCountAndRestrict(anyLong(), anyInt());
+        verify(operationLogMapper, never()).insert(any());
     }
 
     private static CreateReservationRequest request(long courtId, LocalDate date, int start, int end) {

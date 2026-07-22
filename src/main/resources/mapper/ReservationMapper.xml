@@ -37,18 +37,13 @@
                 #{status}, #{verificationCode}, #{verifiedAt}, #{verifiedBy}, #{createdAt})
     </insert>
 
-    <update id="updateById">
+    <update id="transitionStatus">
         UPDATE reservations
-        SET user_id           = #{userId},
-            court_id          = #{courtId},
-            reserve_date      = #{reserveDate},
-            start_time        = #{startTime},
-            end_time          = #{endTime},
-            status            = #{status},
-            verification_code = #{verificationCode},
-            verified_at       = #{verifiedAt},
-            verified_by       = #{verifiedBy}
+        SET status = #{toStatus},
+            verified_at = CASE WHEN #{toStatus} = 'verified' THEN #{verifiedAt} ELSE verified_at END,
+            verified_by = CASE WHEN #{toStatus} = 'verified' THEN #{verifiedBy} ELSE verified_by END
         WHERE id = #{id}
+          AND status = #{fromStatus}
     </update>
 
     <select id="findBySlot" resultMap="reservationMap">

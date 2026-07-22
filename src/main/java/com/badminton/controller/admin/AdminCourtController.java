@@ -62,7 +62,12 @@ public class AdminCourtController {
 
     @DeleteMapping("/{id}")
     public ApiResponse<Boolean> delete(@PathVariable Long id) {
-        courtMapper.deleteById(id);
+        if (courtMapper.selectById(id) == null) {
+            return ApiResponse.failure("场地不存在");
+        }
+        if (courtMapper.softDeleteById(id) != 1) {
+            return ApiResponse.failure("场地删除失败，请刷新后重试");
+        }
         return ApiResponse.success(true);
     }
 }

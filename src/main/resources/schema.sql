@@ -1,6 +1,6 @@
 -- ============================================
 -- 羽毛球场地预约系统 — 数据库初始化脚本
--- 版本: v3.0 (精简版)
+-- 版本: v3.1 (状态流转与数据完整性加固)
 -- ============================================
 
 CREATE DATABASE IF NOT EXISTS badminton DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -46,6 +46,7 @@ CREATE TABLE courts (
     id             BIGINT AUTO_INCREMENT PRIMARY KEY,
     name           VARCHAR(64)  NOT NULL COMMENT '场地名称',
     status         INT          DEFAULT 0 COMMENT '0=正常 1=锁定 2=维护中',
+    is_deleted     TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '逻辑删除标记',
     remark         VARCHAR(128) COMMENT '备注',
     created_at     DATETIME     DEFAULT CURRENT_TIMESTAMP,
     updated_at     DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -70,7 +71,9 @@ CREATE TABLE reservations (
     INDEX idx_reservation_court (court_id),
     INDEX idx_reservation_slot (reserve_date, start_time),
     INDEX idx_reservation_status (status),
-    UNIQUE KEY uk_user_court_slot (user_id, court_id, reserve_date, start_time)
+    UNIQUE KEY uk_user_court_slot (user_id, court_id, reserve_date, start_time),
+    CONSTRAINT fk_reservations_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_reservations_court FOREIGN KEY (court_id) REFERENCES courts(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='预约表';
 
 -- ============================================
@@ -82,7 +85,8 @@ CREATE TABLE activities (
     activity_time  VARCHAR(64)  COMMENT '活动时间',
     location       VARCHAR(128) COMMENT '活动地点',
     description    VARCHAR(500) COMMENT '活动描述',
-    image_url      VARCHAR(256) COMMENT '活动图片URL'
+    image_url      VARCHAR(256) COMMENT '活动图片URL',
+    is_deleted     TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '逻辑删除标记'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='活动表';
 
 -- ============================================
@@ -96,7 +100,9 @@ CREATE TABLE activity_signups (
     phone             VARCHAR(16)  NOT NULL COMMENT '联系电话',
     participant_count INT    NOT NULL DEFAULT 1 COMMENT '参与人数',
     INDEX idx_signup_activity (activity_id),
-    INDEX idx_signup_user (user_id)
+    INDEX idx_signup_user (user_id),
+    CONSTRAINT fk_activity_signups_activity FOREIGN KEY (activity_id) REFERENCES activities(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_activity_signups_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='活动报名表';
 
 -- ============================================

@@ -19,7 +19,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.Clock;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -125,12 +124,16 @@ public class ReservationService {
         }
 
         // 检查用户是否被限制
-        User user = userMapper.selectById(userId);
-        if (user != null && "restricted".equals(user.getStatus())) {
+        // 固定先锁用户，再锁场地，串行化同一用户的预约限制和同一场地的容量检查。
+        User user = userMapper.selectByIdForUpdate(userId);
+        if (user == null) {
+            throw new BusinessException("用户不存在");
+        }
+        if ("restricted".equals(user.getStatus())) {
             throw new BusinessException("您的账户已被限制，无法预约，请联系管理员");
         }
 
-        Court court = courtMapper.selectById(req.getCourtId());
+        Court court = courtMapper.selectByIdForUpdate(req.getCourtId());
         if (court == null) throw new BusinessException("场地不存在");
         if (court.getStatus() != null && court.getStatus() != 0)
             throw new BusinessException("该场地暂不可预约");
@@ -201,11 +204,16 @@ public class ReservationService {
         if (reservation.getUserId() != userId) throw new BusinessException("无权操作该预约");
 
         String status = reservation.getStatus();
-        if ("cancelled".equals(status)) throw new BusinessException("该预约已取消");
-        if ("verified".equals(status)) throw new BusinessException("已核销，不可取消");
+        if (!"unverified".equals(status)) {
+            throw new BusinessException("当前预约状态不可取消");
+        }
 
+        int updated = reservationMapper.transitionStatus(
+                reservationId, "unverified", "cancelled", null, null);
+        if (updated != 1) {
+            throw new BusinessException("预约状态已发生变化，请刷新后重试");
+        }
         reservation.setStatus("cancelled");
-        reservationMapper.updateById(reservation);
 
         logOperation(reservationId, userId, null, "cancel", "取消预约");
     }
@@ -214,17 +222,17 @@ public class ReservationService {
     // 通过核销码或预约ID查找预约，校验时间窗口（预约开始前N分钟才可核销），更新状态
     @Transactional
     public ReservationVO verify(long operatorId, String code, Long reservationId) {
-        // 万能核销码：888888 直接返回模拟数据，方便测试
+        // 演示核销码：用于前端展示核销成功效果，不修改真实预约记录。
         if ("888888".equals(code)) {
             ReservationVO vo = new ReservationVO();
             vo.setId(0L);
             vo.setCourtName("测试场地");
-        vo.setReserveDate(today().toString());
+            vo.setReserveDate(today().toString());
             vo.setStartTime(10);
             vo.setEndTime(11);
             vo.setStatus("verified");
             vo.setStatusDisplay("已验证");
-        vo.setCreatedAt(now().format(DT_FMT));
+            vo.setCreatedAt(now().format(DT_FMT));
             return vo;
         }
 
@@ -238,23 +246,35 @@ public class ReservationService {
         if (reservation == null) throw new BusinessException("验证码错误或预约不存在");
         if (code != null && !code.equals(reservation.getVerificationCode()))
             throw new BusinessException("验证码错误");
-        if ("verified".equals(reservation.getStatus())) throw new BusinessException("该预约已核销");
-        if ("cancelled".equals(reservation.getStatus())) throw new BusinessException("预约已取消");
+        if (!"unverified".equals(reservation.getStatus())) {
+            throw new BusinessException("当前预约状态不可核销");
+        }
 
         // 检查时间窗口
         LocalDateTime reserveStart = LocalDateTime.of(reservation.getReserveDate(),
                 LocalTime.of(reservation.getStartTime(), 0));
-        long minutesUntil = ChronoUnit.MINUTES.between(now(), reserveStart);
-        if (minutesUntil > properties.getCheckinAdvanceMinutes()) throw new BusinessException("尚未到核销时间");
+        LocalDateTime currentTime = now();
+        LocalDateTime earliestCheckin = reserveStart.minusMinutes(properties.getCheckinAdvanceMinutes());
+        LocalDateTime latestCheckin = reserveStart.plusMinutes(properties.getNoshowGraceMinutes());
+        if (currentTime.isBefore(earliestCheckin)) {
+            throw new BusinessException("尚未到核销时间");
+        }
+        if (currentTime.isAfter(latestCheckin)) {
+            throw new BusinessException("已超过核销时间");
+        }
 
+        int updated = reservationMapper.transitionStatus(
+                reservation.getId(), "unverified", "verified", currentTime, operatorId);
+        if (updated != 1) {
+            throw new BusinessException("预约状态已发生变化，请刷新后重试");
+        }
         reservation.setStatus("verified");
-        reservation.setVerifiedAt(now());
+        reservation.setVerifiedAt(currentTime);
         reservation.setVerifiedBy(operatorId);
-        reservationMapper.updateById(reservation);
 
         logOperation(reservation.getId(), reservation.getUserId(), operatorId, "verify", "已核销");
 
-        Court court = courtMapper.selectById(reservation.getCourtId());
+        Court court = courtMapper.selectByIdIncludingDeleted(reservation.getCourtId());
         return toVO(reservation, court);
     }
 
@@ -297,25 +317,25 @@ public class ReservationService {
 
     // ==== 定时任务：自动标记爽约 ====
     // 超过预约时间后仍未核销的标记为"爽约"，累计2次爽约则限制用户预约权限
+    @Transactional
     public void markNoshow() {
         LocalDateTime cutoff = now().minusMinutes(properties.getNoshowGraceMinutes());
         String cutoffStr = cutoff.format(DT_FMT);
         List<Reservation> unverifiedList = reservationMapper.findNoshowCandidates(cutoffStr);
         for (Reservation r : unverifiedList) {
+            int updated = reservationMapper.transitionStatus(
+                    r.getId(), "unverified", "noshow", null, null);
+            if (updated != 1) {
+                continue;
+            }
             r.setStatus("noshow");
-            reservationMapper.updateById(r);
 
-            User u = userMapper.selectById(r.getUserId());
-            if (u != null) {
-                int count = u.getNoshowCount() != null ? u.getNoshowCount() + 1 : 1;
-                u.setNoshowCount(count);
-                if (count >= 2) {
-                    u.setStatus("restricted");
-                    log.info("用户 {} 因 {} 次爽约被限制预约", u.getId(), count);
-                }
-                userMapper.updateById(u);
+            int userUpdated = userMapper.incrementNoshowCountAndRestrict(r.getUserId(), 2);
+            if (userUpdated != 1) {
+                throw new IllegalStateException("爽约预约关联的用户不存在: " + r.getUserId());
             }
 
+            logOperation(r.getId(), r.getUserId(), null, "noshow", "预约超时未核销");
             log.info("已标记爽约: 预约ID={}", r.getId());
         }
     }
@@ -413,6 +433,6 @@ public class ReservationService {
     }
 
     public Court getCourt(long courtId) {
-        return courtMapper.selectById(courtId);
+        return courtMapper.selectByIdIncludingDeleted(courtId);
     }
 }

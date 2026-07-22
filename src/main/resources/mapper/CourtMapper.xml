@@ -4,11 +4,19 @@
 <mapper namespace="com.badminton.mapper.CourtMapper">
 
     <select id="selectById" resultType="com.badminton.entity.Court">
+        SELECT * FROM courts WHERE id = #{id} AND is_deleted = 0
+    </select>
+
+    <select id="selectByIdForUpdate" resultType="com.badminton.entity.Court">
+        SELECT * FROM courts WHERE id = #{id} AND is_deleted = 0 FOR UPDATE
+    </select>
+
+    <select id="selectByIdIncludingDeleted" resultType="com.badminton.entity.Court">
         SELECT * FROM courts WHERE id = #{id}
     </select>
 
     <select id="selectAll" resultType="com.badminton.entity.Court">
-        SELECT * FROM courts ORDER BY id
+        SELECT * FROM courts WHERE is_deleted = 0 ORDER BY id
     </select>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
@@ -25,8 +33,10 @@
         WHERE id = #{id}
     </update>
 
-    <delete id="deleteById">
-        DELETE FROM courts WHERE id = #{id}
-    </delete>
+    <update id="softDeleteById">
+        UPDATE courts
+        SET is_deleted = 1, updated_at = NOW()
+        WHERE id = #{id} AND is_deleted = 0
+    </update>
 
 </mapper>

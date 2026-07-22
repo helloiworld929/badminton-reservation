@@ -12,6 +12,10 @@
         SELECT * FROM users WHERE id = #{id}
     </select>
 
+    <select id="selectByIdForUpdate" resultMap="userMap">
+        SELECT * FROM users WHERE id = #{id} FOR UPDATE
+    </select>
+
     <select id="selectAll" resultMap="userMap">
         SELECT * FROM users
     </select>
@@ -33,6 +37,16 @@
             status     = #{status},
             role       = #{role},
             noshow_count = #{noshowCount}
+        WHERE id = #{id}
+    </update>
+
+    <update id="incrementNoshowCountAndRestrict">
+        UPDATE users
+        SET status = CASE
+                WHEN COALESCE(noshow_count, 0) + 1 &gt;= #{threshold} THEN 'restricted'
+                ELSE status
+            END,
+            noshow_count = COALESCE(noshow_count, 0) + 1
         WHERE id = #{id}
     </update>
 

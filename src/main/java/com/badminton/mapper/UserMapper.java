@@ -11,11 +11,16 @@ public interface UserMapper {
 
     User selectById(@Param("id") Long id);
 
+    User selectByIdForUpdate(@Param("id") Long id);
+
     List<User> selectAll();
 
     int insert(User user);
 
     int updateById(User user);
+
+    int incrementNoshowCountAndRestrict(@Param("id") Long id,
+                                        @Param("threshold") int threshold);
 
     User findByPhone(@Param("phone") String phone);
 

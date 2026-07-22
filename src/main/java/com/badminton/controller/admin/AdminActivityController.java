@@ -81,7 +81,9 @@ public class AdminActivityController {
     @DeleteMapping("/{id}")
     public ApiResponse<Boolean> delete(@PathVariable Long id) {
         if (activityMapper.selectById(id) == null) throw new BusinessException("活动不存在");
-        activityMapper.deleteById(id);
+        if (activityMapper.softDeleteById(id) != 1) {
+            throw new BusinessException("活动删除失败，请刷新后重试");
+        }
         return ApiResponse.success(true);
     }
 
@@ -103,7 +105,9 @@ public class AdminActivityController {
 
     @GetMapping("/{id}/signups")
     public ApiResponse<List<SignupVO>> signups(@PathVariable Long id) {
-        if (activityMapper.selectById(id) == null) throw new BusinessException("活动不存在");
+        if (activityMapper.selectByIdIncludingDeleted(id) == null) {
+            throw new BusinessException("活动不存在");
+        }
 
         List<ActivitySignup> signups = signupMapper.findByActivityId(id);
 

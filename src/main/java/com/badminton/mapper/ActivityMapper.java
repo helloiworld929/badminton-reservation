@@ -11,11 +11,13 @@ public interface ActivityMapper {
 
     Activity selectById(@Param("id") Long id);
 
+    Activity selectByIdIncludingDeleted(@Param("id") Long id);
+
     List<Activity> selectAll();
 
     int insert(Activity activity);
 
     int updateById(Activity activity);
 
-    int deleteById(@Param("id") Long id);
+    int softDeleteById(@Param("id") Long id);
 }
