@@ -5,16 +5,19 @@ import com.badminton.common.BusinessException;
 import com.badminton.dto.response.SignupVO;
 import com.badminton.entity.Activity;
 import com.badminton.entity.ActivitySignup;
-import com.badminton.entity.User;
 import com.badminton.mapper.ActivityMapper;
 import com.badminton.mapper.ActivitySignupMapper;
-import com.badminton.mapper.UserMapper;
+import com.badminton.service.ActivitySignupExcelService;
 import com.badminton.service.OssService;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.util.UriUtils;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,17 +29,17 @@ import java.util.stream.Collectors;
 public class AdminActivityController {
     private final ActivityMapper activityMapper;
     private final ActivitySignupMapper signupMapper;
-    private final UserMapper userMapper;
     private final OssService ossService;
+    private final ActivitySignupExcelService excelService;
 
     public AdminActivityController(ActivityMapper activityMapper,
                                    ActivitySignupMapper signupMapper,
-                                   UserMapper userMapper,
-                                   OssService ossService) {
+                                   OssService ossService,
+                                   ActivitySignupExcelService excelService) {
         this.activityMapper = activityMapper;
         this.signupMapper = signupMapper;
-        this.userMapper = userMapper;
         this.ossService = ossService;
+        this.excelService = excelService;
     }
 
     // ==== 活动增删改查 ====
@@ -105,29 +108,45 @@ public class AdminActivityController {
 
     @GetMapping("/{id}/signups")
     public ApiResponse<List<SignupVO>> signups(@PathVariable Long id) {
-        if (activityMapper.selectByIdIncludingDeleted(id) == null) {
+        requireActivity(id);
+        return ApiResponse.success(findSignupDetails(id));
+    }
+
+    @GetMapping("/{id}/signups/export")
+    public ResponseEntity<byte[]> exportSignups(@PathVariable Long id) {
+        Activity activity = requireActivity(id);
+        try {
+            byte[] content = excelService.export(activity.getTitle(), findSignupDetails(id));
+            String filename = sanitizeFilename(activity.getTitle()) + "-报名名单.xlsx";
+            String encodedFilename = UriUtils.encode(filename, StandardCharsets.UTF_8);
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                    .contentLength(content.length)
+                    .header(HttpHeaders.CONTENT_DISPOSITION,
+                            "attachment; filename*=UTF-8''" + encodedFilename)
+                    .body(content);
+        } catch (IOException e) {
+            throw new BusinessException("报名名单导出失败");
+        }
+    }
+
+    private List<SignupVO> findSignupDetails(Long activityId) {
+        return signupMapper.findDetailsByActivityId(activityId);
+    }
+
+    private Activity requireActivity(Long id) {
+        Activity activity = activityMapper.selectByIdIncludingDeleted(id);
+        if (activity == null) {
             throw new BusinessException("活动不存在");
         }
+        return activity;
+    }
 
-        List<ActivitySignup> signups = signupMapper.findByActivityId(id);
-
-        List<SignupVO> result = new ArrayList<>();
-        for (ActivitySignup s : signups) {
-            SignupVO vo = new SignupVO();
-            vo.setId(s.getId());
-            vo.setActivityId(s.getActivityId());
-            vo.setUserId(s.getUserId());
-            vo.setName(s.getName() != null ? s.getName() : "");
-            vo.setPhone(s.getPhone() != null ? s.getPhone() : "");
-            if (s.getUserId() != null) {
-                User user = userMapper.selectById(s.getUserId());
-                if (user != null) {
-                    vo.setNickname(user.getNickname() != null ? user.getNickname() : "");
-                    vo.setAvatar(user.getAvatar() != null ? user.getAvatar() : "");
-                }
-            }
-            result.add(vo);
+    private String sanitizeFilename(String title) {
+        if (title == null || title.trim().isEmpty()) {
+            return "活动";
         }
-        return ApiResponse.success(result);
+        return title.trim().replaceAll("[\\\\/:*?\"<>|\\r\\n]+", "_");
     }
 }

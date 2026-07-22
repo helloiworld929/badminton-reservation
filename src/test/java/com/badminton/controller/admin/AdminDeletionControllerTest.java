@@ -6,7 +6,7 @@ import com.badminton.entity.Court;
 import com.badminton.mapper.ActivityMapper;
 import com.badminton.mapper.ActivitySignupMapper;
 import com.badminton.mapper.CourtMapper;
-import com.badminton.mapper.UserMapper;
+import com.badminton.service.ActivitySignupExcelService;
 import com.badminton.service.OssService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,9 +31,9 @@ class AdminDeletionControllerTest {
     @Mock
     private ActivitySignupMapper signupMapper;
     @Mock
-    private UserMapper userMapper;
-    @Mock
     private OssService ossService;
+    @Mock
+    private ActivitySignupExcelService excelService;
 
     @InjectMocks
     private AdminActivityController activityController;

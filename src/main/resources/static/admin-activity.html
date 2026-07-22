@@ -81,6 +81,11 @@
             <h3>报名详情 — <span id="signupActivityTitle"></span></h3>
             <button class="close-btn" type="button" id="closeSignupModal">&times;</button>
         </div>
+        <div class="signup-export-actions">
+            <span class="signup-action-hint" id="signupActionHint" aria-live="polite"></span>
+            <button class="btn secondary" type="button" id="generateBracketBtn" disabled>生成比赛签表</button>
+            <button class="btn" type="button" id="exportSignupsBtn" disabled>导出 Excel</button>
+        </div>
         <div class="table-wrap">
             <table id="signupTable">
                 <thead>
@@ -98,7 +103,25 @@
     </div>
 </div>
 
+<!-- Tournament Bracket Preview -->
+<div id="bracketModal" class="modal">
+    <div class="modal-content bracket-modal-content">
+        <div class="modal-header">
+            <h3>比赛签表 — <span id="bracketActivityTitle"></span></h3>
+            <button class="close-btn" type="button" id="closeBracketModal">&times;</button>
+        </div>
+        <div class="bracket-canvas-wrap">
+            <canvas id="bracketCanvas"></canvas>
+        </div>
+        <div class="modal-actions">
+            <button class="btn secondary" type="button" id="rerollBracketBtn">重新抽签</button>
+            <button class="btn" type="button" id="downloadBracketBtn">下载签表图</button>
+        </div>
+    </div>
+</div>
+
 <script src="js/api.js"></script>
+<script src="js/activity-bracket.js"></script>
 <script src="js/admin-activity.js"></script>
 </body>
 </html>

@@ -1,5 +1,6 @@
 package com.badminton.mapper;
 
+import com.badminton.dto.response.SignupVO;
 import com.badminton.entity.ActivitySignup;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -13,7 +14,7 @@ public interface ActivitySignupMapper {
 
     List<ActivitySignup> selectAll();
 
-    List<ActivitySignup> findByActivityId(@Param("activityId") Long activityId);
+    List<SignupVO> findDetailsByActivityId(@Param("activityId") Long activityId);
 
     List<ActivitySignup> findByActivityIdAndUserId(@Param("activityId") Long activityId,
                                                     @Param("userId") Long userId);

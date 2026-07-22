@@ -12,8 +12,18 @@
         SELECT * FROM activity_signups
     </select>
 
-    <select id="findByActivityId" resultType="com.badminton.entity.ActivitySignup">
-        SELECT * FROM activity_signups WHERE activity_id = #{activityId}
+    <select id="findDetailsByActivityId" resultType="com.badminton.dto.response.SignupVO">
+        SELECT s.id,
+               s.activity_id,
+               s.user_id,
+               s.name,
+               s.phone,
+               COALESCE(u.nickname, '') AS nickname,
+               COALESCE(u.avatar, '') AS avatar
+        FROM activity_signups s
+        LEFT JOIN users u ON u.id = s.user_id
+        WHERE s.activity_id = #{activityId}
+        ORDER BY s.id
     </select>
 
     <select id="findByActivityIdAndUserId" resultType="com.badminton.entity.ActivitySignup">
