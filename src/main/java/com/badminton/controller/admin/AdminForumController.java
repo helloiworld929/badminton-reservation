@@ -7,6 +7,7 @@ import com.badminton.dto.request.ForumStatusRequest;
 import com.badminton.dto.response.ForumPostDetailVO;
 import com.badminton.dto.response.PageResult;
 import com.badminton.entity.ForumPost;
+import com.badminton.entity.ForumReply;
 import com.badminton.entity.ForumReport;
 import com.badminton.service.ForumService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -66,6 +67,11 @@ public class AdminForumController {
                                             HttpSession session) {
         forumService.updateReplyStatus(userId(session), id, request.getStatus());
         return ApiResponse.success(true);
+    }
+
+    @GetMapping("/replies/{id}")
+    public ApiResponse<ForumReply> replyDetail(@PathVariable long id) {
+        return ApiResponse.success(forumService.getReplyForAdmin(id));
     }
 
     @GetMapping("/reports")

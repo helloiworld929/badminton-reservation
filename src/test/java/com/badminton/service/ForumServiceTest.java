@@ -2,11 +2,13 @@ package com.badminton.service;
 
 import com.badminton.common.BusinessException;
 import com.badminton.dto.request.ForumPostCreateRequest;
+import com.badminton.dto.request.ForumReportHandleRequest;
 import com.badminton.dto.request.ForumReportRequest;
 import com.badminton.dto.response.ForumPostDetailVO;
 import com.badminton.entity.ForumPost;
 import com.badminton.entity.ForumPostImage;
 import com.badminton.entity.ForumReply;
+import com.badminton.entity.ForumReport;
 import com.badminton.mapper.ForumMapper;
 import com.badminton.mapper.ForumReplyMapper;
 import com.badminton.mapper.ForumReportMapper;
@@ -135,6 +137,59 @@ class ForumServiceTest {
     }
 
     @Test
+    void deletedPostCannotBeRestored() {
+        when(forumMapper.selectPostById(10L)).thenReturn(post(10L, 7L, "deleted"));
+
+        assertThrows(BusinessException.class, () -> forumService.updatePostStatus(99L, 10L, "normal"));
+
+        verify(forumMapper, never()).updatePostStatus(any(), any(), any());
+    }
+
+    @Test
+    void resolvingPostReportHidesPostAndImages() {
+        ForumReport report = pendingReport(20L, "post", 10L);
+        ForumReportHandleRequest request = handleRequest("resolved");
+        when(reportMapper.selectById(20L)).thenReturn(report);
+        when(forumMapper.selectPostById(10L)).thenReturn(post(10L, 7L, "normal"));
+
+        forumService.handleReport(99L, 20L, request);
+
+        verify(forumMapper).updatePostStatus(10L, "hidden", 99L);
+        verify(forumMapper).updateImageStatusByPost(10L, "hidden");
+        verify(reportMapper).handle(20L, "resolved", null, 99L);
+    }
+
+    @Test
+    void resolvingReplyReportHidesReply() {
+        ForumReport report = pendingReport(21L, "reply", 11L);
+        ForumReportHandleRequest request = handleRequest("resolved");
+        ForumReply reply = new ForumReply();
+        reply.setId(11L);
+        reply.setStatus("normal");
+        when(reportMapper.selectById(21L)).thenReturn(report);
+        when(replyMapper.selectById(11L)).thenReturn(reply);
+
+        forumService.handleReport(99L, 21L, request);
+
+        verify(replyMapper).updateStatus(11L, "hidden", 99L);
+        verify(reportMapper).handle(21L, "resolved", null, 99L);
+    }
+
+    @Test
+    void rejectingReportDoesNotHideReportedContent() {
+        ForumReport report = pendingReport(22L, "post", 10L);
+        ForumReportHandleRequest request = handleRequest("rejected");
+        when(reportMapper.selectById(22L)).thenReturn(report);
+
+        forumService.handleReport(99L, 22L, request);
+
+        verify(forumMapper, never()).updatePostStatus(any(), any(), any());
+        verify(forumMapper, never()).updateImageStatusByPost(any(), any());
+        verify(replyMapper, never()).updateStatus(any(), any(), any());
+        verify(reportMapper).handle(22L, "rejected", null, 99L);
+    }
+
+    @Test
     void replyCanOnlyBeAddedToNormalPost() {
         when(forumMapper.selectPostById(10L)).thenReturn(post(10L, 7L, "hidden"));
 
@@ -167,6 +222,21 @@ class ForumServiceTest {
         post.setPinned(false);
         post.setViewCount(0);
         return post;
+    }
+
+    private static ForumReport pendingReport(long id, String targetType, long targetId) {
+        ForumReport report = new ForumReport();
+        report.setId(id);
+        report.setTargetType(targetType);
+        report.setTargetId(targetId);
+        report.setStatus("pending");
+        return report;
+    }
+
+    private static ForumReportHandleRequest handleRequest(String status) {
+        ForumReportHandleRequest request = new ForumReportHandleRequest();
+        request.setStatus(status);
+        return request;
     }
 
     @TestConfiguration

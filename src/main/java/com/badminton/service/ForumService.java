@@ -72,7 +72,7 @@ public class ForumService {
         }
         PageHelper.startPage(pageNum, pageSize);
         List<ForumPost> posts = forumMapper.findPosts(emptyToNull(category), emptyToNull(keyword), emptyToNull(status));
-        // 管理端需要查看被隐藏或删除帖子的原图片，以便审核和恢复。
+        // 管理端需要查看被隐藏或删除帖子的原图片；只有隐藏帖子允许恢复。
         fillImages(posts, null);
         return PageResult.of(posts);
     }
@@ -217,15 +217,21 @@ public class ForumService {
     @Transactional
     public void updatePostStatus(long operatorId, long postId, String status) {
         validateContentStatus(status);
-        requirePost(postId);
-        forumMapper.updatePostStatus(postId, status, operatorId);
-        forumMapper.updateImageStatusByPost(postId, status);
+        ForumPost post = requirePost(postId);
+        if ("deleted".equals(post.getStatus()) && !"deleted".equals(status)) {
+            throw new BusinessException("已删除帖子不可恢复");
+        }
+        updatePostAndImages(postId, status, operatorId);
     }
 
     public void updateReplyStatus(long operatorId, long replyId, String status) {
         validateContentStatus(status);
         requireReply(replyId);
         replyMapper.updateStatus(replyId, status, operatorId);
+    }
+
+    public ForumReply getReplyForAdmin(long replyId) {
+        return requireReply(replyId);
     }
 
     public PageResult<ForumReport> adminListReports(String status, int pageNum, int pageSize) {
@@ -238,12 +244,31 @@ public class ForumService {
         return PageResult.of(reports);
     }
 
+    @Transactional
     public void handleReport(long operatorId, long reportId, ForumReportHandleRequest request) {
         if (!REPORT_STATUSES.contains(request.getStatus())) throw new BusinessException("举报处理状态不合法");
         ForumReport report = reportMapper.selectById(reportId);
         if (report == null) throw new BusinessException("举报记录不存在");
         if (!"pending".equals(report.getStatus())) throw new BusinessException("该举报已经处理");
+        if ("resolved".equals(request.getStatus())) {
+            if ("post".equals(report.getTargetType())) {
+                ForumPost post = requirePost(report.getTargetId());
+                if ("normal".equals(post.getStatus())) {
+                    updatePostAndImages(post.getId(), "hidden", operatorId);
+                }
+            } else if ("reply".equals(report.getTargetType())) {
+                ForumReply reply = requireReply(report.getTargetId());
+                if ("normal".equals(reply.getStatus())) {
+                    replyMapper.updateStatus(reply.getId(), "hidden", operatorId);
+                }
+            }
+        }
         reportMapper.handle(reportId, request.getStatus(), emptyToNull(request.getResult()), operatorId);
+    }
+
+    private void updatePostAndImages(long postId, String status, long operatorId) {
+        forumMapper.updatePostStatus(postId, status, operatorId);
+        forumMapper.updateImageStatusByPost(postId, status);
     }
 
     private ForumPost requirePost(long postId) {

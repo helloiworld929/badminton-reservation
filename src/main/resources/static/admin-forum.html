@@ -17,12 +17,15 @@
                 <option>场地反馈</option><option>失物招领</option><option>其他</option>
             </select>
             <select class="select" id="adminStatus">
-                <option value="">全部状态</option><option value="normal">正常</option>
+                <option value="">全部状态</option><option value="normal" selected>正常</option>
                 <option value="hidden">已隐藏</option><option value="deleted">已删除</option>
             </select>
             <input class="input forum-search" id="adminKeyword" type="search" placeholder="搜索帖子">
-            <button class="btn secondary" id="adminSearch" type="button">查询</button>
+            <button class="btn" id="adminSearch" type="button">查询</button>
+            <button class="btn secondary" id="resetPostFilters" type="button">重置</button>
         </div>
+    </section>
+    <section class="panel">
         <div class="table-wrap">
             <table id="forumPostTable">
                 <thead><tr><th>ID</th><th>标题</th><th>分类</th><th>作者</th><th>状态</th><th>浏览/回复</th><th>发布时间</th><th>操作</th></tr></thead>
@@ -36,11 +39,14 @@
         <h2 class="panel-title">举报处理</h2>
         <div class="toolbar">
             <select class="select" id="reportStatus">
-                <option value="">全部举报</option><option value="pending">待处理</option>
+                <option value="">全部举报</option><option value="pending" selected>待处理</option>
                 <option value="resolved">已处理</option><option value="rejected">已驳回</option>
             </select>
-            <button class="btn secondary" id="loadReports" type="button">查询</button>
+            <button class="btn" id="loadReports" type="button">查询</button>
+            <button class="btn secondary" id="resetReportFilters" type="button">重置</button>
         </div>
+    </section>
+    <section class="panel">
         <div class="table-wrap">
             <table id="forumReportTable">
                 <thead><tr><th>ID</th><th>举报人</th><th>对象</th><th>原因</th><th>状态</th><th>时间</th><th>处理</th></tr></thead>
@@ -53,7 +59,7 @@
 
 <div id="adminPostModal" class="modal">
     <div class="modal-content forum-admin-modal">
-        <div class="modal-header"><h3>帖子详情</h3><button class="close-btn" id="closeAdminPost" type="button">&times;</button></div>
+        <div class="modal-header"><h3 id="adminPostModalTitle">帖子详情</h3><button class="close-btn" id="closeAdminPost" type="button">&times;</button></div>
         <div id="adminPostDetail"></div>
     </div>
 </div>

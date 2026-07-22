@@ -1160,6 +1160,31 @@ button {
     color: #00547d;
 }
 
+.forum-admin-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.forum-admin-image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 150px;
+    overflow: hidden;
+    border: 1px solid #dce4ed;
+    border-radius: 6px;
+    background: #f5f7fa;
+}
+
+.forum-admin-image img {
+    display: block;
+    width: 100%;
+    max-height: 280px;
+    object-fit: contain;
+}
+
 .forum-table-title {
     min-width: 180px;
     max-width: 260px;
@@ -1168,8 +1193,27 @@ button {
     text-overflow: ellipsis;
 }
 
-.forum-admin-actions {
+.forum-admin-actions,
+.forum-report-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     min-width: 220px;
+}
+
+.forum-report-actions {
+    min-width: 146px;
+}
+
+.forum-admin-actions .btn.mini,
+.forum-report-actions .btn.mini {
+    margin: 0;
+}
+
+.forum-report-result {
+    color: #697586;
+    font-size: 13px;
 }
 
 .btn.mini {

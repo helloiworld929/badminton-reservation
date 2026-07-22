@@ -8,6 +8,21 @@ let pendingReportAction = null;
 
 document.getElementById('adminSearch').addEventListener('click', () => { postPage = 1; loadPosts(); });
 document.getElementById('loadReports').addEventListener('click', () => { reportPage = 1; loadReports(); });
+document.getElementById('resetPostFilters').addEventListener('click', () => {
+    document.getElementById('adminCategory').value = '';
+    document.getElementById('adminStatus').value = 'normal';
+    document.getElementById('adminKeyword').value = '';
+    postPage = 1;
+    loadPosts();
+});
+document.getElementById('resetReportFilters').addEventListener('click', () => {
+    document.getElementById('reportStatus').value = 'pending';
+    reportPage = 1;
+    loadReports();
+});
+document.getElementById('adminKeyword').addEventListener('keydown', event => {
+    if (event.key === 'Enter') { postPage = 1; loadPosts(); }
+});
 document.getElementById('closeAdminPost').addEventListener('click', () => postModal.classList.remove('show'));
 postModal.addEventListener('click', e => { if (e.target === postModal) postModal.classList.remove('show'); });
 document.getElementById('closeReportHandle').addEventListener('click', closeReportHandleModal);
@@ -39,9 +54,10 @@ function renderPosts(posts) {
         <td>${post.id}</td><td class="forum-table-title">${post.pinned ? '<span class="tag warning">置顶</span> ' : ''}${escapeHtml(post.title)}</td>
         <td>${escapeHtml(post.category)}</td><td>${escapeHtml(post.authorNickname || '-')}</td><td>${statusText(post.status)}</td>
         <td>${post.viewCount || 0} / ${post.replyCount || 0}</td><td>${formatDate(post.createdAt)}</td>
-        <td class="forum-admin-actions"><button class="btn mini" data-view="${post.id}">查看</button>
-        ${post.status === 'normal' ? `<button class="btn mini secondary" data-pin="${post.id}" data-value="${!post.pinned}">${post.pinned ? '取消置顶' : '置顶'}</button><button class="btn mini secondary" data-status="hidden" data-id="${post.id}">隐藏</button>` : `<button class="btn mini secondary" data-status="normal" data-id="${post.id}">恢复</button>`}
-        ${post.status !== 'deleted' ? `<button class="btn mini danger" data-status="deleted" data-id="${post.id}">删除</button>` : ''}</td></tr>`).join('');
+        <td><div class="forum-admin-actions"><button class="btn mini" data-view="${post.id}">查看</button>
+        ${post.status === 'normal' ? `<button class="btn mini secondary" data-pin="${post.id}" data-value="${!post.pinned}">${post.pinned ? '取消置顶' : '置顶'}</button><button class="btn mini danger" data-status="hidden" data-id="${post.id}">隐藏</button>` : ''}
+        ${post.status === 'hidden' ? `<button class="btn mini secondary" data-status="normal" data-id="${post.id}">恢复</button>` : ''}
+        </div></td></tr>`).join('');
     postTbody.querySelectorAll('[data-view]').forEach(btn => btn.addEventListener('click', () => viewPost(Number(btn.dataset.view))));
     postTbody.querySelectorAll('[data-pin]').forEach(btn => btn.addEventListener('click', () => updatePin(Number(btn.dataset.pin), btn.dataset.value === 'true')));
     postTbody.querySelectorAll('[data-status]').forEach(btn => btn.addEventListener('click', () => updatePostStatus(Number(btn.dataset.id), btn.dataset.status)));
@@ -53,7 +69,9 @@ async function viewPost(id) {
         if (result.code !== 1) throw new Error(result.msg || '加载失败');
         const post = result.data.post;
         const replies = result.data.replies.list || [];
-        document.getElementById('adminPostDetail').innerHTML = `<div class="forum-tags"><span class="tag success">${escapeHtml(post.category)}</span><span>${statusText(post.status)}</span></div><h2>${escapeHtml(post.title)}</h2><div class="forum-meta"><span>${escapeHtml(post.authorNickname || '-')}</span><span>${formatDate(post.createdAt)}</span><span>浏览 ${post.viewCount || 0}</span></div><div class="forum-content">${escapeHtml(post.content)}</div><h3>回复管理</h3><div class="forum-replies">${replies.length ? replies.map(reply => `<article class="forum-reply"><div class="forum-reply-head"><span>${escapeHtml(reply.authorNickname || '-')}</span><span>${statusText(reply.status)}</span></div><div class="forum-reply-content">${escapeHtml(reply.content)}</div><div class="forum-inline-actions">${reply.status === 'normal' ? `<button class="text-btn" data-reply-status="hidden" data-reply-id="${reply.id}">隐藏</button>` : `<button class="text-btn" data-reply-status="normal" data-reply-id="${reply.id}">恢复</button>`}${reply.status !== 'deleted' ? `<button class="text-btn danger-text" data-reply-status="deleted" data-reply-id="${reply.id}">删除</button>` : ''}</div></article>`).join('') : '<div class="empty forum-empty-inline">暂无回复</div>'}</div>`;
+        const gallery = (post.imageUrls || []).map(url => `<a class="forum-admin-image" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer"><img src="${escapeHtml(url)}" alt="帖子图片"></a>`).join('');
+        document.getElementById('adminPostModalTitle').textContent = '帖子详情';
+        document.getElementById('adminPostDetail').innerHTML = `<div class="forum-tags"><span class="tag success">${escapeHtml(post.category)}</span><span>${statusText(post.status)}</span></div><h2>${escapeHtml(post.title)}</h2><div class="forum-meta"><span>${escapeHtml(post.authorNickname || '-')}</span><span>${formatDate(post.createdAt)}</span><span>浏览 ${post.viewCount || 0}</span></div><div class="forum-content">${escapeHtml(post.content)}</div>${gallery ? `<div class="forum-admin-gallery">${gallery}</div>` : ''}<h3>回复管理</h3><div class="forum-replies">${replies.length ? replies.map(reply => `<article class="forum-reply"><div class="forum-reply-head"><span>${escapeHtml(reply.authorNickname || '-')}</span><span>${statusText(reply.status)}</span></div><div class="forum-reply-content">${escapeHtml(reply.content)}</div><div class="forum-inline-actions">${reply.status === 'normal' ? `<button class="text-btn" data-reply-status="hidden" data-reply-id="${reply.id}">隐藏</button>` : `<button class="text-btn" data-reply-status="normal" data-reply-id="${reply.id}">恢复</button>`}${reply.status !== 'deleted' ? `<button class="text-btn danger-text" data-reply-status="deleted" data-reply-id="${reply.id}">删除</button>` : ''}</div></article>`).join('') : '<div class="empty forum-empty-inline">暂无回复</div>'}</div>`;
         postModal.classList.add('show');
         document.querySelectorAll('[data-reply-status]').forEach(btn => btn.addEventListener('click', async () => {
             try {
@@ -65,6 +83,18 @@ async function viewPost(id) {
     } catch (error) { alert(error.message || '加载失败'); }
 }
 
+async function viewReply(id) {
+    try {
+        const result = await apiGet(`/admin/forum/replies/${id}`);
+        if (result.code !== 1) throw new Error(result.msg || '加载失败');
+        const reply = result.data;
+        document.getElementById('adminPostModalTitle').textContent = '回复详情';
+        document.getElementById('adminPostDetail').innerHTML = `<div class="forum-tags"><span>${statusText(reply.status)}</span></div><div class="forum-meta"><span>${escapeHtml(reply.authorNickname || '-')}</span><span>${formatDate(reply.createdAt)}</span><span>所属帖子 #${reply.postId}</span></div><div class="forum-content">${escapeHtml(reply.content)}</div><div class="modal-actions"><button class="btn secondary" type="button" data-view-parent-post="${reply.postId}">查看所属帖子</button></div>`;
+        postModal.classList.add('show');
+        document.querySelector('[data-view-parent-post]').addEventListener('click', () => viewPost(Number(reply.postId)));
+    } catch (error) { alert(error.message || '加载失败'); }
+}
+
 async function updatePin(id, pinned) {
     try {
         const result = await apiPut(`/admin/forum/posts/${id}/pin`, { pinned });
@@ -73,7 +103,6 @@ async function updatePin(id, pinned) {
     } catch (error) { alert(error.message || '操作失败'); }
 }
 async function updatePostStatus(id, status) {
-    if (status === 'deleted' && !confirm('确定逻辑删除该帖子吗？')) return;
     try {
         const result = await apiPut(`/admin/forum/posts/${id}/status`, { status });
         if (result.code !== 1) throw new Error(result.msg || '操作失败');
@@ -95,7 +124,17 @@ async function loadReports() {
 
 function renderReports(reports) {
     if (!reports.length) { reportTbody.innerHTML = '<tr><td colspan="7">暂无举报</td></tr>'; return; }
-    reportTbody.innerHTML = reports.map(report => `<tr><td>${report.id}</td><td>${escapeHtml(report.reporterNickname || '-')}</td><td>${report.targetType === 'post' ? '帖子' : '回复'} #${report.targetId}</td><td>${escapeHtml(report.reason)}</td><td>${reportStatusText(report.status)}</td><td>${formatDate(report.createdAt)}</td><td>${report.status === 'pending' ? `<button class="btn mini" data-report="${report.id}" data-result="resolved">处理</button> <button class="btn mini secondary" data-report="${report.id}" data-result="rejected">驳回</button>` : escapeHtml(report.result || '-')}</td></tr>`).join('');
+    reportTbody.innerHTML = reports.map(report => {
+        const viewButton = `<button class="btn mini" data-report-view="${report.targetId}" data-target-type="${report.targetType}">查看</button>`;
+        const actions = report.status === 'pending'
+            ? `${viewButton}<button class="btn mini secondary" data-report="${report.id}" data-result="rejected">驳回</button><button class="btn mini danger" data-report="${report.id}" data-result="resolved">处理</button>`
+            : `${viewButton}<span class="forum-report-result">${escapeHtml(report.result || '-')}</span>`;
+        return `<tr><td>${report.id}</td><td>${escapeHtml(report.reporterNickname || '-')}</td><td>${report.targetType === 'post' ? '帖子' : '回复'} #${report.targetId}</td><td>${escapeHtml(report.reason)}</td><td>${reportStatusText(report.status)}</td><td>${formatDate(report.createdAt)}</td><td><div class="forum-report-actions">${actions}</div></td></tr>`;
+    }).join('');
+    reportTbody.querySelectorAll('[data-report-view]').forEach(btn => btn.addEventListener('click', () => {
+        const id = Number(btn.dataset.reportView);
+        if (btn.dataset.targetType === 'post') viewPost(id); else viewReply(id);
+    }));
     reportTbody.querySelectorAll('[data-report]').forEach(btn => btn.addEventListener('click', () => handleReport(Number(btn.dataset.report), btn.dataset.result)));
 }
 

@@ -2,6 +2,7 @@ package com.badminton.controller;
 
 import com.badminton.dto.response.PageResult;
 import com.badminton.entity.ForumPost;
+import com.badminton.entity.ForumReply;
 import com.badminton.service.ForumService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -87,5 +88,25 @@ class ForumControllerTest {
                         .sessionAttr("role", "admin"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(1));
+    }
+
+    @Test
+    void adminCanViewExactReportedReply() throws Exception {
+        ForumReply reply = new ForumReply();
+        reply.setId(11L);
+        reply.setPostId(10L);
+        reply.setContent("被举报的回复内容");
+        when(forumService.getReplyForAdmin(11L)).thenReturn(reply);
+
+        mockMvc.perform(get("/admin/forum/replies/11")
+                        .sessionAttr("userId", 99L)
+                        .sessionAttr("role", "admin"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(1))
+                .andExpect(jsonPath("$.data.id").value(11))
+                .andExpect(jsonPath("$.data.postId").value(10))
+                .andExpect(jsonPath("$.data.content").value("被举报的回复内容"));
+
+        verify(forumService).getReplyForAdmin(11L);
     }
 }
