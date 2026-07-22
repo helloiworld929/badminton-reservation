@@ -25,7 +25,7 @@ public class ActivityService {
         return activityMapper.selectAll();
     }
 
-    // 活动报名：校验活动存在性、防重复报名、每人携带人数1-10人上限
+    // 活动报名：校验活动存在性并防止重复报名
     public void signup(long userId, ActivitySignupRequest req) {
         if (activityMapper.selectById(req.getActivityId()) == null) {
             throw new BusinessException("活动不存在");
@@ -37,18 +37,11 @@ public class ActivityService {
             throw new BusinessException("您已报名该活动，请勿重复报名");
         }
 
-        // 每人报名人数不超过10人
-        int newCount = req.getParticipantCount() != null ? req.getParticipantCount() : 1;
-        if (newCount < 1 || newCount > 10) {
-            throw new BusinessException("报名人数须在1-10人之间");
-        }
-
         ActivitySignup signup = new ActivitySignup();
         signup.setActivityId(req.getActivityId());
         signup.setUserId(userId);
         signup.setName(req.getName().trim());
         signup.setPhone(req.getPhone().trim());
-        signup.setParticipantCount(newCount);
         activitySignupMapper.insert(signup);
     }
 }

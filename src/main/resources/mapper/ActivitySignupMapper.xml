@@ -4,8 +4,8 @@
 <mapper namespace="com.badminton.mapper.ActivitySignupMapper">
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO activity_signups (activity_id, user_id, name, phone, participant_count)
-        VALUES (#{activityId}, #{userId}, #{name}, #{phone}, #{participantCount})
+        INSERT INTO activity_signups (activity_id, user_id, name, phone)
+        VALUES (#{activityId}, #{userId}, #{name}, #{phone})
     </insert>
 
     <select id="selectAll" resultType="com.badminton.entity.ActivitySignup">

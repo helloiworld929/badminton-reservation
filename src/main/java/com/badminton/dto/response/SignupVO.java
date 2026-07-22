@@ -9,7 +9,6 @@ public class SignupVO {
     private Long userId;
     private String name;
     private String phone;
-    private Integer participantCount;
     private String nickname;
     private String avatar;
 }

@@ -98,7 +98,6 @@ CREATE TABLE activity_signups (
     user_id           BIGINT NOT NULL COMMENT 'FK -> users.id',
     name              VARCHAR(64)  NOT NULL COMMENT '联系人姓名',
     phone             VARCHAR(16)  NOT NULL COMMENT '联系电话',
-    participant_count INT    NOT NULL DEFAULT 1 COMMENT '参与人数',
     INDEX idx_signup_activity (activity_id),
     INDEX idx_signup_user (user_id),
     CONSTRAINT fk_activity_signups_activity FOREIGN KEY (activity_id) REFERENCES activities(id) ON DELETE RESTRICT,

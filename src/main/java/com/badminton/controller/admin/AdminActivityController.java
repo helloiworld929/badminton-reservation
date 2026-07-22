@@ -119,7 +119,6 @@ public class AdminActivityController {
             vo.setUserId(s.getUserId());
             vo.setName(s.getName() != null ? s.getName() : "");
             vo.setPhone(s.getPhone() != null ? s.getPhone() : "");
-            vo.setParticipantCount(s.getParticipantCount() != null ? s.getParticipantCount() : 0);
             if (s.getUserId() != null) {
                 User user = userMapper.selectById(s.getUserId());
                 if (user != null) {

@@ -77,7 +77,6 @@ function openSignup(activity) {
 function closeSignup() {
     selectedActivity = null;
     form.reset();
-    document.getElementById('participantCount').value = 1;
     modal.classList.remove('show');
 }
 
@@ -88,8 +87,7 @@ async function submitSignup(event) {
         const result = await apiPost('/activity-signups', {
             activityId: selectedActivity.id,
             name: document.getElementById('signupName').value.trim(),
-            phone: document.getElementById('signupPhone').value.trim(),
-            participantCount: Number(document.getElementById('participantCount').value)
+            phone: document.getElementById('signupPhone').value.trim()
         });
         if (result.code === 1) {
             alert('报名成功');

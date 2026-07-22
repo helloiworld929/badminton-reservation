@@ -223,14 +223,14 @@ async function deleteActivity(id) {
 // ==== Signup Modal ====
 async function loadSignups(activityId, activityTitle) {
     document.getElementById('signupActivityTitle').textContent = activityTitle;
-    signupTbody.innerHTML = '<tr><td colspan="6">加载中...</td></tr>';
+    signupTbody.innerHTML = '<tr><td colspan="5">加载中...</td></tr>';
     signupModal.classList.add('show');
     try {
         const result = await apiGet(`/admin/activities/${activityId}/signups`);
         if (result.code === 1) {
             const signups = result.data || [];
             if (!signups.length) {
-                signupTbody.innerHTML = '<tr><td colspan="6">暂无报名记录</td></tr>';
+                signupTbody.innerHTML = '<tr><td colspan="5">暂无报名记录</td></tr>';
             } else {
                 signupTbody.innerHTML = signups.map((s, i) => `
                     <tr>
@@ -239,15 +239,14 @@ async function loadSignups(activityId, activityTitle) {
                         <td>${escapeHtml(s.nickname || '-')}</td>
                         <td>${escapeHtml(s.name)}</td>
                         <td>${escapeHtml(s.phone)}</td>
-                        <td>${s.participantCount || 1}</td>
                     </tr>
                 `).join('');
             }
         } else {
-            signupTbody.innerHTML = `<tr><td colspan="6">${escapeHtml(result.msg || '加载失败')}</td></tr>`;
+            signupTbody.innerHTML = `<tr><td colspan="5">${escapeHtml(result.msg || '加载失败')}</td></tr>`;
         }
     } catch (error) {
-        signupTbody.innerHTML = `<tr><td colspan="6">${escapeHtml(error.message || '网络错误')}</td></tr>`;
+        signupTbody.innerHTML = `<tr><td colspan="5">${escapeHtml(error.message || '网络错误')}</td></tr>`;
     }
 }
 

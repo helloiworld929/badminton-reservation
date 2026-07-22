@@ -9,5 +9,4 @@ public class ActivitySignup {
     private Long userId;
     private String name;
     private String phone;
-    private Integer participantCount;
 }
