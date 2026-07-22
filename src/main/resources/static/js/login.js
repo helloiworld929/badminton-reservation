@@ -20,7 +20,7 @@ document.getElementById('loginForm').addEventListener('submit', async event => {
     msg.textContent = '';
     try {
         const result = await apiPost('/login', {
-            username: document.getElementById('loginUsername').value.trim(),
+            phone: document.getElementById('loginPhone').value.trim(),
             password: document.getElementById('loginPassword').value
         });
         if (result.code === 1) {
@@ -134,12 +134,13 @@ document.getElementById('registerForm').addEventListener('submit', async event =
 
     const phone = document.getElementById('regPhone').value.trim();
     const code = document.getElementById('regCode').value.trim();
-    const username = document.getElementById('regUsername').value.trim();
     const nickname = document.getElementById('regNickname').value.trim();
+    const ageValue = document.getElementById('regAge').value;
+    const age = Number(ageValue);
     const gender = document.getElementById('regGender').value;
     const password = document.getElementById('regPassword').value;
 
-    if (!phone || !code || !username || !password) {
+    if (!phone || !code || !nickname || ageValue === '' || !password) {
         msg.textContent = '请填写所有必填项';
         return;
     }
@@ -147,13 +148,17 @@ document.getElementById('registerForm').addEventListener('submit', async event =
         msg.textContent = '手机号格式不正确';
         return;
     }
+    if (!Number.isInteger(age) || age < 6 || age > 60) {
+        msg.textContent = '年龄必须在6到60之间';
+        return;
+    }
 
     try {
         const result = await apiPost('/register', {
             phone,
             code,
-            username,
-            nickname: nickname || undefined,
+            nickname,
+            age,
             gender: gender || undefined,
             password,
             avatar: avatarUrl || undefined

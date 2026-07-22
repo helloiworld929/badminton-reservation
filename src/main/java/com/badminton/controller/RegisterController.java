@@ -14,7 +14,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -69,22 +72,15 @@ public class RegisterController {
             throw new BusinessException("该手机号已注册");
         }
 
-        // 3. Check if username already taken
-        User existingByUsername = userMapper.findByUsername(request.getUsername());
-        if (existingByUsername != null) {
-            throw new BusinessException("该用户名已存在");
-        }
-
-        // 4. Create user
+        // 3. Create user
         User user = new User();
-        user.setNickname(request.getNickname() != null ? request.getNickname().trim() : "用户" + request.getPhone().substring(7));
-        user.setUsername(request.getUsername().trim());
+        user.setNickname(request.getNickname().trim());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setPhone(request.getPhone());
         user.setAvatar(request.getAvatar());
         user.setGender(request.getGender() != null && !request.getGender().isBlank()
                 ? request.getGender() : "男");
-        user.setAge(18);
+        user.setAge(request.getAge());
         user.setStatus("active");
         user.setRole("user");
         user.setNoshowCount(0);
@@ -95,7 +91,7 @@ public class RegisterController {
         session.setAttribute("userId", user.getId());
         session.setAttribute("role", user.getRole());
 
-        log.info("新用户注册: phone={}, username={}, id={}", request.getPhone(), request.getUsername(), user.getId());
+        log.info("新用户注册: id={}", user.getId());
         return ApiResponse.success(user);
     }
 
@@ -133,13 +129,17 @@ public class RegisterController {
         @NotBlank(message = "验证码不能为空")
         private String code;
 
-        @NotBlank(message = "用户名不能为空")
-        private String username;
-
         @NotBlank(message = "密码不能为空")
         private String password;
 
+        @NotBlank(message = "昵称不能为空")
         private String nickname;
+
+        @NotNull(message = "年龄不能为空")
+        @Min(value = 6, message = "年龄必须在6到60之间")
+        @Max(value = 60, message = "年龄必须在6到60之间")
+        private Integer age;
+
         private String avatar;
         private String gender;
     }

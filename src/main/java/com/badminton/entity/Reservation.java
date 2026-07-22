@@ -26,5 +26,6 @@ public class Reservation {
     private transient String userAvatar;
     private transient String userGender;
     private transient String userNickname;
+    private transient Integer userAge;
     private transient String userPhone;
 }

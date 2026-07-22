@@ -19,6 +19,7 @@
         <result property="userAvatar" column="userAvatar"/>
         <result property="userGender" column="userGender"/>
         <result property="userNickname" column="userNickname"/>
+        <result property="userAge" column="userAge"/>
         <result property="userPhone" column="userPhone"/>
     </resultMap>
 
@@ -48,7 +49,7 @@
 
     <select id="findBySlot" resultMap="reservationMap">
         SELECT r.*, c.name AS courtName, u.avatar AS userAvatar, u.gender AS userGender,
-               u.nickname AS userNickname
+               u.nickname AS userNickname, u.age AS userAge
         FROM reservations r
                  JOIN courts c ON r.court_id = c.id
                  JOIN users u ON r.user_id = u.id

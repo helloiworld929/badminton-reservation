@@ -26,17 +26,16 @@ CREATE TABLE users (
     id             BIGINT AUTO_INCREMENT PRIMARY KEY,
     nickname       VARCHAR(64)  NOT NULL COMMENT '昵称',
     gender         VARCHAR(4)   DEFAULT '男' COMMENT '性别',
-    age            INT          DEFAULT 18 COMMENT '年龄',
-    username       VARCHAR(64)  NOT NULL COMMENT '用户名',
+    age            INT          NOT NULL DEFAULT 18 COMMENT '年龄',
     password       VARCHAR(128) NOT NULL COMMENT '密码',
-    phone          VARCHAR(16)  COMMENT '手机号',
+    phone          VARCHAR(16)  NOT NULL COMMENT '手机号',
     avatar         VARCHAR(256) COMMENT '头像URL',
     status         VARCHAR(16)  DEFAULT 'active' COMMENT 'active/restricted',
     role           VARCHAR(16)  DEFAULT 'user' COMMENT 'user/admin',
     noshow_count   INT          DEFAULT 0 COMMENT '累计爽约次数',
     created_at     DATETIME     DEFAULT CURRENT_TIMESTAMP,
     updated_at     DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    UNIQUE KEY uk_username (username)
+    UNIQUE KEY uk_phone (phone)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
 
 -- ============================================

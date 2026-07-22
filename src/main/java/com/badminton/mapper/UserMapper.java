@@ -24,7 +24,5 @@ public interface UserMapper {
 
     User findByPhone(@Param("phone") String phone);
 
-    User findByUsername(@Param("username") String username);
-
     List<User> findUsers(@Param("keyword") String keyword, @Param("status") String status);
 }

@@ -73,11 +73,11 @@ public class ReservationService {
                 String avatar = r.getUserAvatar() != null ? r.getUserAvatar() : DEFAULT_AVATAR;
                 int gender = genderCode(r.getUserGender());
                 String nickname = r.getUserNickname() != null ? r.getUserNickname() : "";
-                players.add(new CourtAvailabilityVO.PlayerSlotVO(avatar, gender, nickname));
+                players.add(new CourtAvailabilityVO.PlayerSlotVO(avatar, gender, nickname, r.getUserAge()));
             }
     // 不足最大人数的位置补空位占位
             while (players.size() < properties.getMaxPlayersPerCourt()) {
-                players.add(new CourtAvailabilityVO.PlayerSlotVO(DEFAULT_AVATAR, 0, null));
+                players.add(new CourtAvailabilityVO.PlayerSlotVO(DEFAULT_AVATAR, 0, null, null));
             }
             vo.setPlayers(players);
 

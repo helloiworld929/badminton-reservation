@@ -10,10 +10,9 @@ import javax.validation.constraints.Pattern;
 public class UpdateUserRequest {
     private String nickname;
     private String gender;
-    @Min(value = 0, message = "年龄必须在0到100之间")
-    @Max(value = 100, message = "年龄必须在0到100之间")
+    @Min(value = 6, message = "年龄必须在6到60之间")
+    @Max(value = 60, message = "年龄必须在6到60之间")
     private Integer age;
-    private String username;
     @Pattern(regexp = "1[3-9]\\d{9}", message = "手机号格式不正确")
     private String phone;
     private String avatar;

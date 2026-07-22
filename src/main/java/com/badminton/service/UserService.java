@@ -21,15 +21,11 @@ public class UserService {
         this.smsService = smsService;
     }
 
-    // 账号支持用户名或手机号登录，统一先用用户名查，查不到再按手机号查
+    // 手机号是唯一登录标识。
     public User login(LoginRequest request) {
-        String account = request.getUsername().trim();
-        User user = userMapper.findByUsername(account);
-        if (user == null) {
-            user = userMapper.findByPhone(account);
-        }
+        User user = userMapper.findByPhone(request.getPhone().trim());
         if (user == null || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new BusinessException("用户名或密码错误");
+            throw new BusinessException("手机号或密码错误");
         }
         return user;
     }

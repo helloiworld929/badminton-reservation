@@ -19,8 +19,8 @@
     <!-- ========== 登录表单 ========== -->
     <form id="loginForm" class="login-form">
         <label>
-            用户名 / 手机号
-            <input class="input" id="loginUsername" type="text" placeholder="输入用户名或手机号" required>
+            手机号
+            <input class="input" id="loginPhone" type="tel" maxlength="11" placeholder="输入手机号" required>
         </label>
         <label>
             密码
@@ -53,12 +53,12 @@
             <button type="button" id="sendCodeBtn" class="btn sms-btn">获取验证码</button>
         </div>
         <label>
-            用户名
-            <input class="input" id="regUsername" type="text" placeholder="设置登录用户名" required>
+            昵称
+            <input class="input" id="regNickname" type="text" placeholder="设置显示昵称" required>
         </label>
         <label>
-            昵称
-            <input class="input" id="regNickname" type="text" placeholder="设置显示昵称（可选）">
+            年龄
+            <input class="input" id="regAge" type="number" min="6" max="60" placeholder="请输入年龄" required>
         </label>
         <label>
             性别

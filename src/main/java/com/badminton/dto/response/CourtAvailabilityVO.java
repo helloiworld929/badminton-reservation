@@ -23,5 +23,6 @@ public class CourtAvailabilityVO {
         private String avatar;
         private Integer gender;
         private String nickname;
+        private Integer age;
     }
 }

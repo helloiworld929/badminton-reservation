@@ -91,7 +91,6 @@ function renderUser(user) {
     document.getElementById('nickname').textContent = user.nickname;
     document.getElementById('gender').textContent = user.gender;
     document.getElementById('age').textContent = user.age;
-    document.getElementById('username').textContent = user.username;
     document.getElementById('phone').textContent = user.phone;
     const statusEl = document.getElementById('status');
     if (user.status === 'active') {

@@ -19,7 +19,7 @@ searchKeyword.addEventListener('keydown', (e) => {
 });
 
 async function loadUsers(pageNum) {
-    tbody.innerHTML = '<tr><td colspan="8">加载中...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7">加载中...</td></tr>';
     try {
         const params = new URLSearchParams();
         const kw = searchKeyword.value.trim();
@@ -34,17 +34,17 @@ async function loadUsers(pageNum) {
             render();
             renderPagination();
         } else {
-            tbody.innerHTML = `<tr><td colspan="8">${escapeHtml(result.msg || '加载失败')}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="7">${escapeHtml(result.msg || '加载失败')}</td></tr>`;
         }
     } catch (error) {
-        tbody.innerHTML = `<tr><td colspan="8">${escapeHtml(error.message || '网络错误')}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7">${escapeHtml(error.message || '网络错误')}</td></tr>`;
     }
 }
 
 function render() {
     const list = pageData.list || [];
     if (!list.length) {
-        tbody.innerHTML = '<tr><td colspan="8">暂无匹配的用户</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7">暂无匹配的用户</td></tr>';
         return;
     }
     tbody.innerHTML = '';
@@ -56,7 +56,6 @@ function render() {
             <td>${(pageData.pageNum - 1) * pageData.pageSize + i + 1}</td>
             <td><img src="${escapeHtml(user.avatar || defaultAvatar)}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;" alt="头像"></td>
             <td>${escapeHtml(user.nickname)}</td>
-            <td>${escapeHtml(user.username)}</td>
             <td>${escapeHtml(user.phone || '-')}</td>
             <td>${statusTag(user.status)}</td>
             <td>${user.noshowCount || 0}</td>

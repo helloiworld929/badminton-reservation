@@ -103,6 +103,7 @@ class ReservationServiceTest {
         player.setCourtId(1L);
         player.setUserGender("男");
         player.setUserNickname("测试用户");
+        player.setUserAge(22);
 
         when(courtMapper.selectAll()).thenReturn(Collections.singletonList(court));
         when(reservationMapper.findBySlot(TOMORROW, 12)).thenReturn(Collections.singletonList(player));
@@ -114,6 +115,7 @@ class ReservationServiceTest {
         assertEquals("可预约", result.get(0).getStatusDisplay());
         assertEquals(4, result.get(0).getPlayers().size());
         assertEquals(1, result.get(0).getPlayers().get(0).getGender());
+        assertEquals(22, result.get(0).getPlayers().get(0).getAge());
     }
 
     @Test

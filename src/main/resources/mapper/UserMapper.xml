@@ -21,8 +21,8 @@
     </select>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO users (nickname, gender, age, username, password, phone, avatar, status, role, noshow_count, created_at)
-        VALUES (#{nickname}, #{gender}, #{age}, #{username}, #{password}, #{phone}, #{avatar}, #{status}, #{role}, #{noshowCount}, #{createdAt})
+        INSERT INTO users (nickname, gender, age, password, phone, avatar, status, role, noshow_count, created_at)
+        VALUES (#{nickname}, #{gender}, #{age}, #{password}, #{phone}, #{avatar}, #{status}, #{role}, #{noshowCount}, #{createdAt})
     </insert>
 
     <update id="updateById">
@@ -30,7 +30,6 @@
         SET nickname   = #{nickname},
             gender     = #{gender},
             age        = #{age},
-            username   = #{username},
             password   = #{password},
             phone      = #{phone},
             avatar     = #{avatar},
@@ -54,16 +53,11 @@
         SELECT * FROM users WHERE phone = #{phone}
     </select>
 
-    <select id="findByUsername" resultMap="userMap">
-        SELECT * FROM users WHERE username = #{username}
-    </select>
-
     <select id="findUsers" resultMap="userMap">
         SELECT * FROM users
         <where>
             <if test='keyword != null and keyword != ""'>
                 AND (nickname LIKE CONCAT('%', #{keyword}, '%')
-                OR username LIKE CONCAT('%', #{keyword}, '%')
                 OR phone LIKE CONCAT('%', #{keyword}, '%'))
             </if>
             <if test='status != null and status != ""'>

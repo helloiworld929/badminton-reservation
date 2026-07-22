@@ -219,6 +219,7 @@ function openModal(court) {
                 <img src="${escapeHtml(p.avatar || defaultAvatar)}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid ${borderColor(p.gender)};">
                 <span>${escapeHtml(p.nickname)}</span>
                 <span style="color:#697586;font-size:12px;">${p.gender === 1 ? '男' : p.gender === 2 ? '女' : ''}</span>
+                <span style="color:#697586;font-size:12px;">${p.age == null ? '' : escapeHtml(p.age) + '岁'}</span>
             </div>
         `).join('');
     } else {
