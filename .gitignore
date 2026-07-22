@@ -17,3 +17,5 @@ target/
 Thumbs.db
 
 /agent.md
+
+/docs/sql/
