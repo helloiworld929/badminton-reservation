@@ -3,6 +3,7 @@ package com.badminton.config;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalTime;
@@ -28,5 +29,6 @@ public class ReservationProperties {
     /** 超过预约开始时间多久后标记为爽约（分钟）。 */
     private int noshowGraceMinutes = 30;
     /** 每天开始接受预约的时间。 */
+    @DateTimeFormat(pattern = "HH:mm")
     private LocalTime dailyOpenTime = LocalTime.MIDNIGHT;
 }
